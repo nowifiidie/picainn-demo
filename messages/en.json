@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "gallery": "Gallery",
+    "location": "Location",
+    "inquiry": "Inquiry"
+  },
+  "gallery": {
+    "title": "Gallery"
+  },
+  "hero": {
+    "title": "Welcome to Our Guest House",
+    "subtitle": "Experience authentic Japanese hospitality in the heart of Tokyo",
+    "checkAvailability": "Check Availability"
+  },
+  "features": {
+    "shibuya": "7 mins from Shibuya Station",
+    "wifi": "Free Pocket Wi-Fi",
+    "support": "English/Chinese/Korean Support",
+    "amenities": "Kitchen & Laundry"
+  },
+  "booking": {
+    "title": "Book Your Stay",
+    "selectDates": "Select Dates",
+    "fullName": "Full Name",
+    "email": "Email",
+    "guests": "Number of Guests",
+    "contactApp": "Preferred Contact App",
+    "contactOptions": {
+      "whatsapp": "WhatsApp",
+      "line": "LINE",
+      "wechat": "WeChat",
+      "email": "Email"
+    },
+    "submit": "Submit Inquiry",
+    "thankYou": "Thank You!",
+    "thankYouMessage": "We have received your inquiry. We will contact you on your preferred app to finalize your booking.",
+    "close": "Close"
+  },
+  "localGuide": {
+    "title": "Nearby Favorites",
+    "convenience": "Convenience Store",
+    "coffee": "Coffee",
+    "izakaya": "Izakaya"
+  },
+  "footer": {
+    "license": "Residential Accommodation Business Act License No.",
+    "licenseNumber": "第M000000000号"
+  }
+}
+

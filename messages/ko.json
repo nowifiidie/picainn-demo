@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "gallery": "갤러리",
+    "location": "위치",
+    "inquiry": "문의"
+  },
+  "gallery": {
+    "title": "갤러리"
+  },
+  "hero": {
+    "title": "게스트하우스에 오신 것을 환영합니다",
+    "subtitle": "도쿄 중심에서 진정한 일본식 환대를 경험하세요",
+    "checkAvailability": "예약 가능 여부 확인"
+  },
+  "features": {
+    "shibuya": "시부야역에서 7분",
+    "wifi": "무료 포켓 Wi-Fi",
+    "support": "영어/중국어/한국어 지원",
+    "amenities": "주방 및 세탁"
+  },
+  "booking": {
+    "title": "숙소 예약",
+    "selectDates": "날짜 선택",
+    "fullName": "성명",
+    "email": "이메일",
+    "guests": "게스트 수",
+    "contactApp": "선호 연락 방법",
+    "contactOptions": {
+      "whatsapp": "WhatsApp",
+      "line": "LINE",
+      "wechat": "WeChat",
+      "email": "이메일"
+    },
+    "submit": "문의 제출",
+    "thankYou": "감사합니다!",
+    "thankYouMessage": "문의를 접수했습니다. 선호하시는 연락 방법으로 연락드리겠습니다.",
+    "close": "닫기"
+  },
+  "localGuide": {
+    "title": "주변 추천",
+    "convenience": "편의점",
+    "coffee": "커피",
+    "izakaya": "이자카야"
+  },
+  "footer": {
+    "license": "주거숙박사업법 등록번호",
+    "licenseNumber": "第M000000000号"
+  }
+}
+

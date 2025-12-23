@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "gallery": "图库",
+    "location": "位置",
+    "inquiry": "咨询"
+  },
+  "gallery": {
+    "title": "图库"
+  },
+  "hero": {
+    "title": "欢迎来到我们的民宿",
+    "subtitle": "在东京市中心体验正宗的日式款待",
+    "checkAvailability": "查看空房"
+  },
+  "features": {
+    "shibuya": "距离涩谷站7分钟",
+    "wifi": "免费便携Wi-Fi",
+    "support": "英语/中文/韩语支持",
+    "amenities": "厨房和洗衣"
+  },
+  "booking": {
+    "title": "预订住宿",
+    "selectDates": "选择日期",
+    "fullName": "全名",
+    "email": "电子邮件",
+    "guests": "客人数量",
+    "contactApp": "首选联系方式",
+    "contactOptions": {
+      "whatsapp": "WhatsApp",
+      "line": "LINE",
+      "wechat": "微信",
+      "email": "电子邮件"
+    },
+    "submit": "提交咨询",
+    "thankYou": "谢谢！",
+    "thankYouMessage": "我们已收到您的咨询。我们将通过您首选的联系方式与您联系以完成预订。",
+    "close": "关闭"
+  },
+  "localGuide": {
+    "title": "附近推荐",
+    "convenience": "便利店",
+    "coffee": "咖啡",
+    "izakaya": "居酒屋"
+  },
+  "footer": {
+    "license": "住宅宿泊事业法登记号",
+    "licenseNumber": "第M000000000号"
+  }
+}
+
