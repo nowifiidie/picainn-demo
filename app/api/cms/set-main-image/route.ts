@@ -111,10 +111,11 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Convert to Files for upload
-    const sourceFile = new File([sourceBlob], 'main.jpg', { type: sourceBlob.type });
-    const mainFile = new File([mainBlob], filename, { type: mainBlob.type });
+    const sourceFile = new File([sourceBlob], 'main.jpg', { type: sourceBlob.type || 'image/jpeg' });
+    const mainFile = new File([mainBlob], cleanFilename, { type: mainBlob.type || 'image/jpeg' });
 
     // Upload swapped images (allow overwrite since we're swapping existing images)
+    // IMPORTANT: Upload new images FIRST, then delete old ones to prevent data loss
     let newMainResult, newSourceResult;
     try {
       [newMainResult, newSourceResult] = await Promise.all([
@@ -127,23 +128,40 @@ export async function POST(request: NextRequest) {
           allowOverwrite: true,
         }),
       ]);
+      
+      console.log('Successfully uploaded swapped images:', {
+        newMain: newMainResult.url,
+        newSource: newSourceResult.url
+      });
     } catch (uploadError) {
       console.error('Error uploading images to Blob Storage:', uploadError);
+      // Don't delete old images if upload failed - they're still needed!
       return NextResponse.json(
         { 
           success: false, 
           error: 'Failed to upload images to Blob Storage',
-          details: uploadError instanceof Error ? uploadError.message : 'Unknown error'
+          details: uploadError instanceof Error ? uploadError.message : 'Unknown error',
+          note: 'Original images are preserved. Please try again.'
         },
         { status: 500 }
       );
     }
 
-    // Delete old blobs
-    await Promise.all([
-      deleteImageFromBlob(sourceImage.url).catch(() => {}),
-      deleteImageFromBlob(mainImage.url).catch(() => {}),
-    ]);
+    // Only delete old blobs AFTER successful upload
+    // Only delete if the URLs are different (to avoid deleting the new uploads)
+    try {
+      if (sourceImage.url !== newMainResult.url) {
+        await deleteImageFromBlob(sourceImage.url);
+        console.log('Deleted old source image:', sourceImage.url);
+      }
+      if (mainImage.url !== newSourceResult.url && mainImage.url !== newMainResult.url) {
+        await deleteImageFromBlob(mainImage.url);
+        console.log('Deleted old main image:', mainImage.url);
+      }
+    } catch (deleteError) {
+      console.error('Error deleting old blobs (non-fatal):', deleteError);
+      // Non-fatal - new images are already uploaded, old ones can be cleaned up later
+    }
 
     // Update room metadata in Redis if needed
     const { Redis } = await import('@upstash/redis');

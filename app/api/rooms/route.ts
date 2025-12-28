@@ -71,11 +71,34 @@ export async function GET() {
             .filter(img => !img.isMain && !img.isHidden)
             .sort((a, b) => a.filename.localeCompare(b.filename));
 
-          if (mainImage) {
+          // Include room even if no main image (use first available image or placeholder)
+          if (images.length > 0) {
+            const displayImage = mainImage || images[0]; // Use main image or first available
             availableRooms.push({
               roomId,
-              mainImage: mainImage.url,
+              mainImage: displayImage.url,
               additionalImages: additionalImages.map(img => img.url),
+              metadata: {
+                name: metadata.name,
+                type: metadata.type,
+                description: metadata.description,
+                amenities: metadata.amenities,
+                bedInfo: metadata.bedInfo,
+                maxGuests: metadata.maxGuests,
+                size: metadata.size,
+                address: metadata.address,
+                mapUrl: metadata.mapUrl,
+                altText: metadata.altText,
+                lastUpdated: metadata.lastUpdated,
+              },
+            });
+          } else {
+            // Room has no images at all - still include it but with a placeholder
+            console.warn(`Room ${roomId} has no images, using placeholder`);
+            availableRooms.push({
+              roomId,
+              mainImage: '/images/placeholder-room.jpg',
+              additionalImages: [],
               metadata: {
                 name: metadata.name,
                 type: metadata.type,
