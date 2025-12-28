@@ -141,9 +141,8 @@ export async function POST(request: NextRequest) {
     size: '${escapedSize}',
     address: '${escapedAddress}',
     mapUrl: '${escapedMapUrl}'${altTextContent},
-    mapUrl: 'https://www.google.com/maps/embed?pb=...',
-    ${altTextContent}lastUpdated: ${timestamp},
-  }`;
+    lastUpdated: ${timestamp},
+  },`;
 
     // Insert new room entry
     const newContent = 
@@ -152,7 +151,26 @@ export async function POST(request: NextRequest) {
       roomsFileContent.slice(insertPosition);
 
     // Write updated file
-    await writeFile(roomsFilePath, newContent, 'utf-8');
+    try {
+      await writeFile(roomsFilePath, newContent, 'utf-8');
+    } catch (writeError: any) {
+      console.error('File write error:', writeError);
+      // In production (serverless), file writes might fail
+      if (writeError.code === 'EROFS' || writeError.code === 'EACCES' || writeError.code === 'EPERM') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Cannot add room in production environment',
+            details: 'File system is read-only. Room images have been saved, but room metadata cannot be updated. You may need to manually add the room entry to lib/rooms.ts in your repository.',
+            code: writeError.code,
+            roomId,
+            note: 'The room folder and images were created, but the metadata file could not be updated. Please add the room entry manually to lib/rooms.ts and commit it to your repository.'
+          },
+          { status: 403 }
+        );
+      }
+      throw writeError;
+    }
 
     // Update CMS config timestamp
     await updateCMSConfig('rooms');
@@ -167,8 +185,18 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error adding room:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error details:', errorMessage);
+    if (errorStack) {
+      console.error('Error stack:', errorStack);
+    }
     return NextResponse.json(
-      { success: false, error: 'Failed to add room' },
+      { 
+        success: false, 
+        error: 'Failed to add room',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      },
       { status: 500 }
     );
   }

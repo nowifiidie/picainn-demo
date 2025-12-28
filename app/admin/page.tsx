@@ -76,20 +76,38 @@ export default function AdminPage() {
     setIsRoomUploading(true);
     setRoomStatus(null);
 
-    const formData = new FormData(e.currentTarget);
-    const response = await fetch('/api/cms/upload-room', {
-      method: 'POST',
-      body: formData,
-    });
-    const result = await response.json();
+    try {
+      const formData = new FormData(e.currentTarget);
+      const response = await fetch('/api/cms/upload-room', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
 
-    setRoomStatus(result);
-    setIsRoomUploading(false);
-    
-    if (result.success) {
-      e.currentTarget.reset();
-      // Refresh rooms list
-      fetchRooms();
+      console.log('Add room response:', result);
+
+      setRoomStatus(result);
+      setIsRoomUploading(false);
+      
+      if (result.success) {
+        e.currentTarget.reset();
+        // Refresh rooms list
+        await fetchRooms();
+      } else {
+        // Show detailed error if available
+        const errorMsg = result.details 
+          ? `${result.error}\n\n${result.details}`
+          : result.error || 'Failed to add room';
+        console.error('Add room error:', result);
+      }
+    } catch (error) {
+      console.error('Error adding room:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setRoomStatus({
+        success: false,
+        error: `Failed to add room: ${errorMessage}`
+      });
+      setIsRoomUploading(false);
     }
   }
 
