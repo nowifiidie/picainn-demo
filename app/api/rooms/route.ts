@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { readdir, access, constants } from 'fs/promises';
+import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { existsSync } from 'fs';
 
 interface RoomImages {
   roomId: string;
@@ -51,12 +53,45 @@ export async function GET() {
       }
     }
 
-    // Sort rooms numerically (room1, room2, ..., room10, room11, etc.)
-    availableRooms.sort((a, b) => {
-      const numA = parseInt(a.roomId.replace('room', '')) || 0;
-      const numB = parseInt(b.roomId.replace('room', '')) || 0;
-      return numA - numB;
-    });
+    // Try to load saved room order
+    let roomOrder: string[] = [];
+    const orderFilePath = join(process.cwd(), 'data', 'room-order.json');
+    if (existsSync(orderFilePath)) {
+      try {
+        const orderContent = await readFile(orderFilePath, 'utf-8');
+        roomOrder = JSON.parse(orderContent);
+      } catch (error) {
+        console.error('Error reading room order:', error);
+      }
+    }
+
+    // Sort rooms based on saved order, or fallback to numerical sort
+    if (roomOrder.length > 0) {
+      availableRooms.sort((a, b) => {
+        const orderA = roomOrder.indexOf(a.roomId);
+        const orderB = roomOrder.indexOf(b.roomId);
+        
+        // If both are in order, sort by order
+        if (orderA !== -1 && orderB !== -1) {
+          return orderA - orderB;
+        }
+        // If only A is in order, A comes first
+        if (orderA !== -1) return -1;
+        // If only B is in order, B comes first
+        if (orderB !== -1) return 1;
+        // If neither is in order, sort numerically
+        const numA = parseInt(a.roomId.replace('room', '')) || 0;
+        const numB = parseInt(b.roomId.replace('room', '')) || 0;
+        return numA - numB;
+      });
+    } else {
+      // Fallback to numerical sort if no order file exists
+      availableRooms.sort((a, b) => {
+        const numA = parseInt(a.roomId.replace('room', '')) || 0;
+        const numB = parseInt(b.roomId.replace('room', '')) || 0;
+        return numA - numB;
+      });
+    }
 
     // Add cache headers to ensure fresh data
     return NextResponse.json(

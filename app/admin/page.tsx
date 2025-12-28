@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Wifi, Wind, Tv, Refrigerator, Utensils, Home, Eye, EyeOff, Trash2, Upload, Star, X } from 'lucide-react';
+import { Wifi, Wind, Tv, Refrigerator, Utensils, Home, Eye, EyeOff, Trash2, Upload, Star, X, GripVertical } from 'lucide-react';
 import { getAllRoomMetadata, getRoomMetadata } from '@/lib/rooms';
 
 const PRESET_AMENITIES = [
@@ -47,6 +47,9 @@ export default function AdminPage() {
   const [imageRefreshKey, setImageRefreshKey] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
+  const [roomOrder, setRoomOrder] = useState<string[]>([]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   async function handleHeroSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -258,9 +261,44 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchRoomOrder(): Promise<string[]> {
+    try {
+      const response = await fetch('/api/cms/room-order');
+      if (response.ok) {
+        const data = await response.json();
+        const order = data.order || [];
+        setRoomOrder(order);
+        return order;
+      }
+    } catch (error) {
+      console.error('Error fetching room order:', error);
+    }
+    return [];
+  }
+
+  async function saveRoomOrder(newOrder: string[]) {
+    try {
+      const response = await fetch('/api/cms/room-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: newOrder }),
+      });
+      if (response.ok) {
+        setRoomOrder(newOrder);
+      } else {
+        console.error('Failed to save room order');
+      }
+    } catch (error) {
+      console.error('Error saving room order:', error);
+    }
+  }
+
   async function fetchRooms() {
     setIsLoadingRooms(true);
     try {
+      // Fetch room order first
+      const order = await fetchRoomOrder();
+
       // Fetch rooms with images from API (with cache busting)
       const response = await fetch(`/api/rooms?t=${Date.now()}`, {
         cache: 'no-store',
@@ -293,12 +331,70 @@ export default function AdminPage() {
         };
       });
 
-      setRooms(mergedRooms);
+      // Sort rooms based on saved order
+      const sortedRooms = [...mergedRooms].sort((a, b) => {
+        const orderA = order.indexOf(a.roomId);
+        const orderB = order.indexOf(b.roomId);
+        
+        // If both are in order, sort by order
+        if (orderA !== -1 && orderB !== -1) {
+          return orderA - orderB;
+        }
+        // If only A is in order, A comes first
+        if (orderA !== -1) return -1;
+        // If only B is in order, B comes first
+        if (orderB !== -1) return 1;
+        // If neither is in order, maintain original order
+        return 0;
+      });
+
+      setRooms(sortedRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
     } finally {
       setIsLoadingRooms(false);
     }
+  }
+
+  function handleDragStart(index: number) {
+    setDraggedIndex(index);
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    setDragOverIndex(index);
+  }
+
+  function handleDragLeave() {
+    setDragOverIndex(null);
+  }
+
+  function handleDrop(e: React.DragEvent, dropIndex: number) {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newRooms = [...rooms];
+    const draggedRoom = newRooms[draggedIndex];
+    newRooms.splice(draggedIndex, 1);
+    newRooms.splice(dropIndex, 0, draggedRoom);
+
+    setRooms(newRooms);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+
+    // Save the new order
+    const newOrder = newRooms.map(room => room.roomId);
+    saveRoomOrder(newOrder);
+  }
+
+  function handleDragEnd() {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   }
 
   useEffect(() => {
@@ -391,7 +487,7 @@ export default function AdminPage() {
 
         {/* Current Rooms Section */}
         <section className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-light text-gray-900">Current Rooms</h2>
             <button
               onClick={fetchRooms}
@@ -400,6 +496,9 @@ export default function AdminPage() {
               Refresh
             </button>
           </div>
+          <p className="text-sm text-gray-500 mb-6">
+            💡 Drag and drop room cards to reorder them. The order will be reflected on the home page.
+          </p>
           {isLoadingRooms ? (
             <div className="text-center py-8">
               <p className="text-gray-500">Loading rooms...</p>
@@ -410,12 +509,22 @@ export default function AdminPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rooms.map((room) => (
+              {rooms.map((room, index) => (
                 <div
                   key={room.roomId}
-                  className="border border-gray-200 rounded-sm overflow-hidden hover:shadow-md transition-shadow"
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`border border-gray-200 rounded-sm overflow-hidden hover:shadow-md transition-all flex flex-col cursor-move ${
+                    draggedIndex === index ? 'opacity-50' : ''
+                  } ${
+                    dragOverIndex === index ? 'ring-2 ring-[#333333] ring-offset-2' : ''
+                  }`}
                 >
-                  <div className="relative aspect-[4/3] bg-gray-100">
+                  <div className="relative aspect-[4/3] bg-gray-100 flex-shrink-0">
                     {room.hasImage ? (
                       <Image
                         src={room.image}
@@ -442,35 +551,42 @@ export default function AdminPage() {
                       </div>
                     )}
                   </div>
-                  <div className="p-4">
+                  <div className="p-4 flex flex-col flex-1">
                     <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-medium text-gray-900 text-lg">{room.name}</h3>
-                        <p className="text-sm text-gray-600">{room.type}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <h3 className="font-medium text-gray-900 text-lg truncate">{room.name}</h3>
+                        </div>
+                        <p className="text-sm text-gray-600 truncate ml-6">{room.type}</p>
                       </div>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded flex-shrink-0 ml-2">
                         {room.roomId}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700 mb-3 line-clamp-2">{room.description}</p>
+                    <p className="text-sm text-gray-700 mb-3 line-clamp-2 min-h-[2.5rem]">{room.description}</p>
                     <div className="flex gap-4 text-xs text-gray-500 mb-3">
                       <span>👥 {room.maxGuests} guests</span>
                       <span>📐 {room.size}</span>
                     </div>
-                    {room.altText && (
-                      <div className="pt-3 border-t border-gray-100">
-                        <p className="text-xs font-medium text-gray-700 mb-1">Alt Text:</p>
-                        <div className="space-y-1 text-xs text-gray-600">
-                          {room.altText.en && <div>🇬🇧 EN: {room.altText.en}</div>}
-                          {room.altText.ja && <div>🇯🇵 JA: {room.altText.ja}</div>}
-                          {room.altText.ko && <div>🇰🇷 KO: {room.altText.ko}</div>}
-                          {room.altText.zh && <div>🇨🇳 ZH: {room.altText.zh}</div>}
-                        </div>
-                      </div>
-                    )}
+                    <div className="pt-3 border-t border-gray-100 mb-4 min-h-[3rem]">
+                      {room.altText ? (
+                        <>
+                          <p className="text-xs font-medium text-gray-700 mb-1">Alt Text:</p>
+                          <div className="space-y-1 text-xs text-gray-600">
+                            {room.altText.en && <div>🇬🇧 EN: {room.altText.en}</div>}
+                            {room.altText.ja && <div>🇯🇵 JA: {room.altText.ja}</div>}
+                            {room.altText.ko && <div>🇰🇷 KO: {room.altText.ko}</div>}
+                            {room.altText.zh && <div>🇨🇳 ZH: {room.altText.zh}</div>}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-xs text-gray-400">No alt text</div>
+                      )}
+                    </div>
                     <button
                       onClick={() => handleEditClick(room)}
-                      className="mt-4 w-full px-4 py-2 bg-[#333333] text-white rounded-sm text-sm font-medium hover:bg-gray-800 transition-colors"
+                      className="mt-auto w-full px-4 py-2 bg-[#333333] text-white rounded-sm text-sm font-medium hover:bg-gray-800 transition-colors"
                     >
                       Edit Room
                     </button>
