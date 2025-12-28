@@ -56,8 +56,9 @@ export default function RoomDetailModal({ room, onClose }: RoomDetailModalProps)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-sm max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
-        <div className="sticky top-4 z-20 flex justify-end mb-[-48px]">
+      <div className="bg-white rounded-sm max-w-6xl w-full max-h-[90vh] overflow-hidden relative flex flex-col sm:flex-row">
+        {/* Close Button */}
+        <div className="absolute top-4 right-4 z-20">
           <button
             onClick={onClose}
             className="p-2 bg-white/90 rounded-full hover:bg-white transition-colors shadow-lg"
@@ -66,15 +67,17 @@ export default function RoomDetailModal({ room, onClose }: RoomDetailModalProps)
           </button>
         </div>
 
-        {/* Image Gallery - Airbnb Style */}
-        <div className="relative w-full h-64 sm:h-96 bg-gray-100 group">
+        {/* Left Side - Image Gallery */}
+        <div className="relative w-full sm:w-1/2 h-64 sm:h-auto bg-gray-100 group flex-shrink-0">
           <Image
             src={images[currentImageIndex]}
             alt={`${room.name} - Image ${currentImageIndex + 1}`}
             fill
             className="object-cover transition-opacity duration-500"
-            sizes="100vw"
+            sizes="50vw"
             priority
+            unoptimized
+            key={`${images[currentImageIndex]}-${currentImageIndex}`}
           />
           
           {/* Navigation Arrows */}
@@ -123,14 +126,14 @@ export default function RoomDetailModal({ room, onClose }: RoomDetailModalProps)
 
           {/* Image Counter */}
           {hasMultipleImages && (
-            <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm z-10">
+            <div className="absolute top-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm z-10">
               {currentImageIndex + 1} / {images.length}
             </div>
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-6 sm:p-8">
+        {/* Right Side - Content */}
+        <div className="w-full sm:w-1/2 p-6 sm:p-8 overflow-y-auto">
           <div className="mb-6">
             <h2 className="text-3xl font-light text-[#333333] mb-2">{room.name}</h2>
             <p className="text-lg text-gray-600 font-light">{room.type}</p>

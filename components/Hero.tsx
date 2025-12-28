@@ -14,7 +14,7 @@ export default function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900/70 to-gray-800/50 z-0">
         <Image
-          src="https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop"
+          src="/images/hero/hero-background.jpg"
           alt="Japanese Guest House"
           fill
           priority

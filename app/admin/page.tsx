@@ -1,0 +1,1167 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { Wifi, Wind, Tv, Refrigerator, Utensils, Home, Eye, EyeOff, Trash2, Upload, Star, X } from 'lucide-react';
+import { getAllRoomMetadata, getRoomMetadata } from '@/lib/rooms';
+
+const PRESET_AMENITIES = [
+  { name: 'Wi-Fi', icon: Wifi },
+  { name: 'Air Conditioner', icon: Wind },
+  { name: 'TV', icon: Tv },
+  { name: 'Refrigerator', icon: Refrigerator },
+  { name: 'Kitchen', icon: Utensils },
+  { name: 'Private Bathroom', icon: Home },
+];
+
+interface RoomDisplay {
+  roomId: string;
+  name: string;
+  type?: string;
+  description: string;
+  image: string;
+  maxGuests: number;
+  size: string;
+  hasImage?: boolean; // Flag to indicate if image exists
+  altText?: {
+    en?: string;
+    ja?: string;
+    ko?: string;
+    zh?: string;
+  };
+}
+
+export default function AdminPage() {
+  const [heroStatus, setHeroStatus] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
+  const [roomStatus, setRoomStatus] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
+  const [isHeroUploading, setIsHeroUploading] = useState(false);
+  const [isRoomUploading, setIsRoomUploading] = useState(false);
+  const [rooms, setRooms] = useState<RoomDisplay[]>([]);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(true);
+  const [editingRoom, setEditingRoom] = useState<RoomDisplay | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editStatus, setEditStatus] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
+  const [roomImages, setRoomImages] = useState<Array<{ filename: string; url: string; isMain: boolean; isHidden: boolean }>>([]);
+  const [isLoadingImages, setIsLoadingImages] = useState(false);
+  const [updatingImage, setUpdatingImage] = useState<string | null>(null);
+  const [imageRefreshKey, setImageRefreshKey] = useState(0);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string>('');
+
+  async function handleHeroSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsHeroUploading(true);
+    setHeroStatus(null);
+
+    const formData = new FormData(e.currentTarget);
+    const response = await fetch('/api/cms/update-hero', {
+      method: 'POST',
+      body: formData,
+    });
+    const result = await response.json();
+
+    setHeroStatus(result);
+    setIsHeroUploading(false);
+    
+    if (result.success) {
+      e.currentTarget.reset();
+    }
+  }
+
+  async function handleRoomSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsRoomUploading(true);
+    setRoomStatus(null);
+
+    const formData = new FormData(e.currentTarget);
+    const response = await fetch('/api/cms/upload-room', {
+      method: 'POST',
+      body: formData,
+    });
+    const result = await response.json();
+
+    setRoomStatus(result);
+    setIsRoomUploading(false);
+    
+    if (result.success) {
+      e.currentTarget.reset();
+      // Refresh rooms list
+      fetchRooms();
+    }
+  }
+
+  async function handleEditSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsEditing(true);
+    setEditStatus(null);
+
+    const formData = new FormData(e.currentTarget);
+    const response = await fetch('/api/cms/update-room', {
+      method: 'POST',
+      body: formData,
+    });
+    const result = await response.json();
+
+    setEditStatus(result);
+    setIsEditing(false);
+    
+    if (result.success) {
+      // Store success message in sessionStorage before redirecting
+      sessionStorage.setItem('roomUpdateSuccess', result.message || 'Room updated successfully!');
+      // Immediately redirect to /admin
+      window.location.href = '/admin';
+    }
+    // If failed, stay on the modal and show error (editStatus already set above)
+  }
+
+  async function handleEditClick(room: RoomDisplay) {
+    // Get full room metadata including all fields
+    const fullMetadata = getRoomMetadata(room.roomId);
+    if (fullMetadata) {
+      setEditingRoom({
+        ...room,
+        // Add missing fields from metadata
+        type: fullMetadata.type,
+        maxGuests: fullMetadata.maxGuests,
+        size: fullMetadata.size,
+      });
+    } else {
+      setEditingRoom(room);
+    }
+    await fetchRoomImages(room.roomId);
+  }
+
+  async function fetchRoomImages(roomId: string) {
+    setIsLoadingImages(true);
+    try {
+      // Add cache busting timestamp to force fresh data
+      const response = await fetch(`/api/cms/room-images?roomId=${roomId}&t=${Date.now()}`);
+      const result = await response.json();
+      if (result.success) {
+        // Add cache busting timestamp to each image URL
+        const imagesWithCacheBust = (result.images || []).map((img: any) => ({
+          ...img,
+          url: `${img.url}?t=${Date.now()}`,
+        }));
+        setRoomImages(imagesWithCacheBust);
+      }
+    } catch (error) {
+      console.error('Error fetching room images:', error);
+    } finally {
+      setIsLoadingImages(false);
+    }
+  }
+
+  async function handleDeleteImage(roomId: string, filename: string) {
+    // Get the current image to show in confirmation
+    const imageToDelete = roomImages.find(img => img.filename === filename);
+    const displayName = imageToDelete?.filename || filename;
+    
+    if (!confirm(`Are you sure you want to delete "${displayName}"?\n\nThis action cannot be undone.`)) return;
+
+    setUpdatingImage(filename);
+    try {
+      const response = await fetch(`/api/cms/delete-image?roomId=${roomId}&filename=${encodeURIComponent(filename)}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      if (result.success) {
+        // Wait a bit for file system to sync, then refresh
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await fetchRoomImages(roomId);
+      } else {
+        alert(result.error || 'Failed to delete image');
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      alert('Failed to delete image');
+    } finally {
+      setUpdatingImage(null);
+    }
+  }
+
+  async function handleSetMainImage(roomId: string, filename: string) {
+    setUpdatingImage(filename);
+    try {
+      const response = await fetch('/api/cms/set-main-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId, filename }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        // Wait a bit for file system operations to complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // Force a hard refresh by clearing the image state first and updating refresh key
+        setRoomImages([]);
+        setImageRefreshKey(prev => prev + 1);
+        // Refresh images with cache busting
+        await fetchRoomImages(roomId);
+        // Then refresh rooms list
+        fetchRooms();
+      } else {
+        alert(result.error || 'Failed to set main image');
+      }
+    } catch (error) {
+      console.error('Error setting main image:', error);
+      alert('Failed to set main image');
+    } finally {
+      setUpdatingImage(null);
+    }
+  }
+
+  async function handleToggleVisibility(roomId: string, filename: string, hide: boolean) {
+    setUpdatingImage(filename);
+    try {
+      const response = await fetch('/api/cms/toggle-image-visibility', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId, filename, hide }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        await fetchRoomImages(roomId);
+      } else {
+        alert(result.error || 'Failed to toggle image visibility');
+      }
+    } catch (error) {
+      console.error('Error toggling image visibility:', error);
+      alert('Failed to toggle image visibility');
+    } finally {
+      setUpdatingImage(null);
+    }
+  }
+
+  async function handleUpdateImage(roomId: string, filename: string, file: File) {
+    setUpdatingImage(filename);
+    try {
+      const formData = new FormData();
+      formData.append('roomId', roomId);
+      formData.append('filename', filename);
+      formData.append('image', file);
+
+      const response = await fetch('/api/cms/update-image', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      if (result.success) {
+        await fetchRoomImages(roomId);
+      } else {
+        alert(result.error || 'Failed to update image');
+      }
+    } catch (error) {
+      console.error('Error updating image:', error);
+      alert('Failed to update image');
+    } finally {
+      setUpdatingImage(null);
+    }
+  }
+
+  async function fetchRooms() {
+    setIsLoadingRooms(true);
+    try {
+      // Fetch rooms with images from API (with cache busting)
+      const response = await fetch(`/api/rooms?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
+      const roomsWithImages: { roomId: string; mainImage: string }[] = response.ok 
+        ? (await response.json()).rooms 
+        : [];
+
+      // Get ALL rooms from metadata (including ones without images)
+      const allMetadata = getAllRoomMetadata();
+
+      // Create a map of rooms with images
+      const imageMap = new Map(
+        roomsWithImages.map(room => [room.roomId, room.mainImage])
+      );
+
+      // Merge all metadata with image info
+      const mergedRooms: RoomDisplay[] = allMetadata.map((metadata) => {
+        const hasImage = imageMap.has(metadata.id);
+        return {
+          roomId: metadata.id,
+          name: metadata.name,
+          type: metadata.type,
+          description: metadata.description,
+          image: hasImage ? imageMap.get(metadata.id)! : '/images/placeholder-room.jpg', // Fallback or placeholder
+          maxGuests: metadata.maxGuests,
+          size: metadata.size,
+          altText: metadata.altText,
+          hasImage, // Add flag to indicate if image exists
+        };
+      });
+
+      setRooms(mergedRooms);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+    } finally {
+      setIsLoadingRooms(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchRooms();
+    
+    // Check for success message from room update
+    const successMsg = sessionStorage.getItem('roomUpdateSuccess');
+    if (successMsg) {
+      setSuccessMessage(successMsg);
+      setShowSuccessModal(true);
+      sessionStorage.removeItem('roomUpdateSuccess'); // Clear after showing
+    }
+  }, []);
+
+  return (
+    <>
+      {/* Success Notification - Fixed position top right */}
+      {showSuccessModal && (
+        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2">
+          <div className="bg-white rounded-lg shadow-lg border border-green-200 max-w-md w-full p-4 flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-gray-900">Success!</h3>
+              <p className="text-sm text-gray-600 mt-1">{successMessage}</p>
+            </div>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
+          <h1 className="text-3xl font-light text-gray-900 mb-2">CMS Admin Panel</h1>
+          <p className="text-gray-600">Manage your landing page content</p>
+        </div>
+
+        {/* Hero Image Upload Section */}
+        <section className="bg-white rounded-lg shadow-sm p-8 mb-8">
+          <h2 className="text-2xl font-light text-gray-900 mb-6">Hero Image</h2>
+          <form onSubmit={handleHeroSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="hero-image" className="block text-sm font-medium text-gray-700 mb-2">
+                Upload Hero Background Image
+              </label>
+              <input
+                type="file"
+                id="hero-image"
+                name="image"
+                accept="image/*"
+                required
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                This will replace the current hero background image.
+              </p>
+            </div>
+            <button
+              type="submit"
+              disabled={isHeroUploading}
+              className="px-6 py-2 bg-[#333333] text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isHeroUploading ? 'Uploading...' : 'Update Hero Image'}
+            </button>
+            {heroStatus && (
+              <div
+                className={`p-4 rounded-sm ${
+                  heroStatus.success
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
+                {heroStatus.success ? heroStatus.message : heroStatus.error}
+              </div>
+            )}
+          </form>
+        </section>
+
+        {/* Current Rooms Section */}
+        <section className="bg-white rounded-lg shadow-sm p-8 mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-light text-gray-900">Current Rooms</h2>
+            <button
+              onClick={fetchRooms}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-sm font-medium hover:bg-gray-200 transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+          {isLoadingRooms ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Loading rooms...</p>
+            </div>
+          ) : rooms.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No rooms found. Add your first room below.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rooms.map((room) => (
+                <div
+                  key={room.roomId}
+                  className="border border-gray-200 rounded-sm overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <div className="relative aspect-[4/3] bg-gray-100">
+                    {room.hasImage ? (
+                      <Image
+                        src={room.image}
+                        alt={room.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        unoptimized
+                        key={room.image}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                        <div className="text-center text-gray-400">
+                          <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-xs">No image</p>
+                        </div>
+                      </div>
+                    )}
+                    {!room.hasImage && (
+                      <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                        Missing Image
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-medium text-gray-900 text-lg">{room.name}</h3>
+                        <p className="text-sm text-gray-600">{room.type}</p>
+                      </div>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                        {room.roomId}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-3 line-clamp-2">{room.description}</p>
+                    <div className="flex gap-4 text-xs text-gray-500 mb-3">
+                      <span>👥 {room.maxGuests} guests</span>
+                      <span>📐 {room.size}</span>
+                    </div>
+                    {room.altText && (
+                      <div className="pt-3 border-t border-gray-100">
+                        <p className="text-xs font-medium text-gray-700 mb-1">Alt Text:</p>
+                        <div className="space-y-1 text-xs text-gray-600">
+                          {room.altText.en && <div>🇬🇧 EN: {room.altText.en}</div>}
+                          {room.altText.ja && <div>🇯🇵 JA: {room.altText.ja}</div>}
+                          {room.altText.ko && <div>🇰🇷 KO: {room.altText.ko}</div>}
+                          {room.altText.zh && <div>🇨🇳 ZH: {room.altText.zh}</div>}
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleEditClick(room)}
+                      className="mt-4 w-full px-4 py-2 bg-[#333333] text-white rounded-sm text-sm font-medium hover:bg-gray-800 transition-colors"
+                    >
+                      Edit Room
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Edit Room Modal */}
+        {editingRoom && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+                <h2 className="text-2xl font-light text-gray-900">Edit Room: {editingRoom.name}</h2>
+                <button
+                  onClick={() => {
+                    setEditingRoom(null);
+                    setEditStatus(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
+                <input type="hidden" name="roomId" value={editingRoom.roomId} />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-2">
+                      Room Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-name"
+                      name="name"
+                      defaultValue={editingRoom.name}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-type" className="block text-sm font-medium text-gray-700 mb-2">
+                      Room Type *
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-type"
+                      name="type"
+                      defaultValue={getRoomMetadata(editingRoom.roomId)?.type || ''}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
+                    Description *
+                  </label>
+                  <textarea
+                    id="edit-description"
+                    name="description"
+                    defaultValue={editingRoom.description}
+                    required
+                    rows={4}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="edit-maxGuests" className="block text-sm font-medium text-gray-700 mb-2">
+                      Max Guests *
+                    </label>
+                    <input
+                      type="number"
+                      id="edit-maxGuests"
+                      name="maxGuests"
+                      defaultValue={editingRoom.maxGuests}
+                      required
+                      min="1"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-size" className="block text-sm font-medium text-gray-700 mb-2">
+                      Room Size (m²) *
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-size"
+                      name="size"
+                      defaultValue={editingRoom.size}
+                      required
+                      placeholder="e.g., 20"
+                      onBlur={(e) => {
+                        const value = e.target.value.trim();
+                        // Extract number and auto-format to m²
+                        const numberMatch = value.match(/\d+/);
+                        if (numberMatch && !value.toLowerCase().endsWith('m²') && !value.toLowerCase().endsWith('m2')) {
+                          e.target.value = `${numberMatch[0]} m²`;
+                        } else if (value.toLowerCase().endsWith('m2')) {
+                          e.target.value = value.replace(/m2$/i, 'm²');
+                        }
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Just type a number (e.g., 20) - it will auto-convert to m²</p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-bedInfo" className="block text-sm font-medium text-gray-700 mb-2">
+                      Bed Info *
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-bedInfo"
+                      name="bedInfo"
+                      defaultValue={getRoomMetadata(editingRoom.roomId)?.bedInfo || ''}
+                      required
+                      placeholder="e.g., 1 double bed (140 cm x 200 cm)"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Amenities *
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {PRESET_AMENITIES.map((amenity) => {
+                      const Icon = amenity.icon;
+                      const currentAmenities = getRoomMetadata(editingRoom.roomId)?.amenities || [];
+                      const isChecked = currentAmenities.includes(amenity.name);
+                      return (
+                        <label
+                          key={amenity.name}
+                          className={`flex items-center gap-2 p-3 border-2 rounded-sm cursor-pointer transition-colors ${
+                            isChecked
+                              ? 'border-[#333333] bg-gray-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            name="amenities"
+                            value={amenity.name}
+                            defaultChecked={isChecked}
+                            className="w-4 h-4 text-[#333333] border-gray-300 rounded focus:ring-[#333333]"
+                          />
+                          <Icon className="w-5 h-5 text-gray-600" />
+                          <span className="text-sm text-gray-700">{amenity.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-address" className="block text-sm font-medium text-gray-700 mb-2">
+                    Address *
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-address"
+                    name="address"
+                    defaultValue={getRoomMetadata(editingRoom.roomId)?.address || ''}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-mapUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                    Google Maps Embed URL *
+                  </label>
+                  <input
+                    type="url"
+                    id="edit-mapUrl"
+                    name="mapUrl"
+                    defaultValue={getRoomMetadata(editingRoom.roomId)?.mapUrl || ''}
+                    required
+                    placeholder="https://www.google.com/maps/embed?pb=..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="edit-altTextEn" className="block text-sm font-medium text-gray-700 mb-2">
+                      Alt Text (English)
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-altTextEn"
+                      name="altTextEn"
+                      defaultValue={editingRoom.altText?.en || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-altTextJa" className="block text-sm font-medium text-gray-700 mb-2">
+                      Alt Text (日本語)
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-altTextJa"
+                      name="altTextJa"
+                      defaultValue={editingRoom.altText?.ja || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-altTextKo" className="block text-sm font-medium text-gray-700 mb-2">
+                      Alt Text (한국어)
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-altTextKo"
+                      name="altTextKo"
+                      defaultValue={editingRoom.altText?.ko || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-altTextZh" className="block text-sm font-medium text-gray-700 mb-2">
+                      Alt Text (中文)
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-altTextZh"
+                      name="altTextZh"
+                      defaultValue={editingRoom.altText?.zh || ''}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Image Management Section */}
+                <div className="border-t border-gray-200 pt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-4">
+                    Manage Room Images
+                  </label>
+                  
+                  {isLoadingImages ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Loading images...</p>
+                    </div>
+                  ) : roomImages.length === 0 ? (
+                    <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-sm">
+                      <p className="text-gray-500">No images found for this room</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {roomImages.map((image) => (
+                        <div
+                          key={image.filename}
+                          className={`relative border-2 rounded-sm overflow-hidden ${
+                            image.isMain ? 'border-[#333333] ring-2 ring-[#333333]' : 'border-gray-200'
+                          } ${image.isHidden ? 'opacity-50' : ''}`}
+                        >
+                          {/* Image */}
+                          <div className="relative aspect-square bg-gray-100">
+                            <Image
+                              src={image.url}
+                              alt={image.filename}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                              unoptimized
+                              key={`${image.filename}-${imageRefreshKey}`}
+                            />
+                            {image.isMain && (
+                              <div className="absolute top-2 left-2 bg-[#333333] text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-current" />
+                                Main
+                              </div>
+                            )}
+                            {image.isHidden && (
+                              <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                                <EyeOff className="w-3 h-3" />
+                                Hidden
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Controls */}
+                          <div className="p-2 bg-white border-t border-gray-200">
+                            <div className="flex flex-wrap gap-1">
+                              {/* Set as Main */}
+                              {!image.isMain && !image.isHidden && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetMainImage(editingRoom!.roomId, image.filename)}
+                                  disabled={updatingImage === image.filename || isLoadingImages}
+                                  className="flex-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors disabled:opacity-50"
+                                  title="Set as main image"
+                                >
+                                  <Star className="w-3 h-3 mx-auto" />
+                                </button>
+                              )}
+
+                              {/* Toggle Visibility */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleVisibility(editingRoom!.roomId, image.filename, !image.isHidden)}
+                                disabled={updatingImage === image.filename || image.isMain || isLoadingImages}
+                                className="flex-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors disabled:opacity-50"
+                                title={image.isHidden ? 'Show image' : 'Hide image'}
+                              >
+                                {image.isHidden ? (
+                                  <Eye className="w-3 h-3 mx-auto" />
+                                ) : (
+                                  <EyeOff className="w-3 h-3 mx-auto" />
+                                )}
+                              </button>
+
+                              {/* Update Image */}
+                              <label className={`flex-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-center ${
+                                updatingImage === image.filename || isLoadingImages ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                              }`}>
+                                <Upload className="w-3 h-3 mx-auto" />
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file && !isLoadingImages) {
+                                      handleUpdateImage(editingRoom!.roomId, image.filename, file);
+                                    }
+                                  }}
+                                  disabled={updatingImage === image.filename || isLoadingImages}
+                                />
+                              </label>
+
+                              {/* Delete Image */}
+                              {!image.isMain && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    // Always use the filename from the current image object in state
+                                    // This ensures we're deleting the correct file even after renames
+                                    handleDeleteImage(editingRoom!.roomId, image.filename);
+                                  }}
+                                  disabled={updatingImage === image.filename || isLoadingImages}
+                                  className="flex-1 px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors disabled:opacity-50"
+                                  title={`Delete ${image.filename}`}
+                                >
+                                  <Trash2 className="w-3 h-3 mx-auto" />
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1 truncate" title={image.filename}>
+                              {image.filename}
+                            </p>
+                          </div>
+
+                          {updatingImage === image.filename && (
+                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                              <div className="text-sm text-gray-600">Processing...</div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="edit-images" className="block text-sm font-medium text-gray-700 mb-2">
+                    Add New Images (optional)
+                  </label>
+                  <input
+                    type="file"
+                    id="edit-images"
+                    name="images"
+                    accept="image/*"
+                    multiple
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    Upload new images to add to this room. They will be added as additional images.
+                  </p>
+                </div>
+
+                <div className="flex gap-4 pt-4 border-t border-gray-200">
+                  <button
+                    type="submit"
+                    disabled={isEditing}
+                    className="flex-1 px-6 py-2 bg-[#333333] text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isEditing ? 'Updating...' : 'Update Room'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingRoom(null);
+                      setEditStatus(null);
+                    }}
+                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-sm font-medium hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                {editStatus && (
+                  <div
+                    className={`p-4 rounded-sm ${
+                      editStatus.success
+                        ? 'bg-green-50 text-green-800 border border-green-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
+                    }`}
+                  >
+                    {editStatus.success ? editStatus.message : editStatus.error}
+                  </div>
+                )}
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add New Room Section */}
+        <section className="bg-white rounded-lg shadow-sm p-8">
+          <h2 className="text-2xl font-light text-gray-900 mb-6">Add New Room</h2>
+          <form onSubmit={handleRoomSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="room-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Room Name *
+                </label>
+                <input
+                  type="text"
+                  id="room-name"
+                  name="name"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  placeholder="e.g., Room 6"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="room-type" className="block text-sm font-medium text-gray-700 mb-2">
+                  Room Type *
+                </label>
+                <input
+                  type="text"
+                  id="room-type"
+                  name="type"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  placeholder="e.g., Standard Double"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="room-description" className="block text-sm font-medium text-gray-700 mb-2">
+                Description *
+              </label>
+              <textarea
+                id="room-description"
+                name="description"
+                required
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                placeholder="Describe the room..."
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="room-maxGuests" className="block text-sm font-medium text-gray-700 mb-2">
+                  Max Guests *
+                </label>
+                <input
+                  type="number"
+                  id="room-maxGuests"
+                  name="maxGuests"
+                  defaultValue="2"
+                  required
+                  min="1"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="room-size" className="block text-sm font-medium text-gray-700 mb-2">
+                  Room Size (m²) *
+                </label>
+                <input
+                  type="text"
+                  id="room-size"
+                  name="size"
+                  defaultValue="20"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  placeholder="e.g., 20"
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    // Extract number and auto-format to m²
+                    const numberMatch = value.match(/\d+/);
+                    if (numberMatch && !value.toLowerCase().endsWith('m²') && !value.toLowerCase().endsWith('m2')) {
+                      e.target.value = `${numberMatch[0]} m²`;
+                    } else if (value.toLowerCase().endsWith('m2')) {
+                      e.target.value = value.replace(/m2$/i, 'm²');
+                    }
+                  }}
+                />
+                <p className="mt-1 text-xs text-gray-500">Just type a number (e.g., 20) - it will auto-convert to m²</p>
+              </div>
+
+              <div>
+                <label htmlFor="room-bedInfo" className="block text-sm font-medium text-gray-700 mb-2">
+                  Bed Info *
+                </label>
+                <input
+                  type="text"
+                  id="room-bedInfo"
+                  name="bedInfo"
+                  defaultValue="1 double bed (140 cm x 200 cm)"
+                  required
+                  placeholder="e.g., 1 double bed (140 cm x 200 cm)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="alt-text-en" className="block text-sm font-medium text-gray-700 mb-2">
+                  Alt Text (English)
+                </label>
+                <input
+                  type="text"
+                  id="alt-text-en"
+                  name="altTextEn"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  placeholder="SEO-friendly alt text in English"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="alt-text-ja" className="block text-sm font-medium text-gray-700 mb-2">
+                  Alt Text (日本語)
+                </label>
+                <input
+                  type="text"
+                  id="alt-text-ja"
+                  name="altTextJa"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  placeholder="SEO用の日本語のaltテキスト"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="alt-text-ko" className="block text-sm font-medium text-gray-700 mb-2">
+                  Alt Text (한국어)
+                </label>
+                <input
+                  type="text"
+                  id="alt-text-ko"
+                  name="altTextKo"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  placeholder="SEO 친화적인 한국어 alt 텍스트"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="alt-text-zh" className="block text-sm font-medium text-gray-700 mb-2">
+                  Alt Text (中文)
+                </label>
+                <input
+                  type="text"
+                  id="alt-text-zh"
+                  name="altTextZh"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  placeholder="SEO友好的中文alt文本"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Amenities *
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {PRESET_AMENITIES.map((amenity) => {
+                  const Icon = amenity.icon;
+                  return (
+                    <label
+                      key={amenity.name}
+                      className="flex items-center gap-2 p-3 border-2 border-gray-200 rounded-sm cursor-pointer hover:border-gray-300 transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        name="amenities"
+                        value={amenity.name}
+                        defaultChecked={amenity.name === 'Wi-Fi' || amenity.name === 'Private Bathroom'} // Default checked for common amenities
+                        className="w-4 h-4 text-[#333333] border-gray-300 rounded focus:ring-[#333333]"
+                      />
+                      <Icon className="w-5 h-5 text-gray-600" />
+                      <span className="text-sm text-gray-700">{amenity.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="room-address" className="block text-sm font-medium text-gray-700 mb-2">
+                Address *
+              </label>
+              <input
+                type="text"
+                id="room-address"
+                name="address"
+                defaultValue="Near Komagome Station, Bunkyo City, Tokyo"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                placeholder="e.g., Near Komagome Station, Bunkyo City, Tokyo"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="room-mapUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                Google Maps Embed URL *
+              </label>
+              <input
+                type="url"
+                id="room-mapUrl"
+                name="mapUrl"
+                defaultValue="https://www.google.com/maps/embed?pb=..."
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                placeholder="e.g., https://www.google.com/maps/embed?pb=..."
+              />
+            </div>
+
+            <div>
+              <label htmlFor="room-images" className="block text-sm font-medium text-gray-700 mb-2">
+                Room Images *
+              </label>
+              <input
+                type="file"
+                id="room-images"
+                name="images"
+                accept="image/*"
+                multiple
+                required
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Upload one or more images. The first image will be the main image (main.jpg), additional images will be saved as image-1.jpg, image-2.jpg, etc.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isRoomUploading}
+              className="px-6 py-2 bg-[#333333] text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isRoomUploading ? 'Adding Room...' : 'Add Room'}
+            </button>
+            {roomStatus && (
+              <div
+                className={`p-4 rounded-sm ${
+                  roomStatus.success
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
+                {roomStatus.success ? roomStatus.message : roomStatus.error}
+              </div>
+            )}
+          </form>
+        </section>
+      </div>
+    </div>
+    </>
+  );
+}
+
