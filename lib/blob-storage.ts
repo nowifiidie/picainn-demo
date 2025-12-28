@@ -26,7 +26,9 @@ export async function uploadImageToBlob(
       const existingBlob = blobs.find(b => b.pathname === path);
       if (existingBlob) {
         await del(existingBlob.url);
-        console.log(`Deleted existing blob: ${path}`);
+        console.log(`Deleted existing blob before upload: ${path}`);
+        // Wait a moment for deletion to propagate
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     } catch (deleteError) {
       console.warn(`Could not delete existing blob ${path} (may not exist):`, deleteError);
@@ -41,15 +43,28 @@ export async function uploadImageToBlob(
     });
     return { url: blob.url };
   } catch (error: any) {
-    // If blob still exists (delete might have failed), try with addRandomSuffix
-    if (error?.message?.includes('already exists')) {
-      console.warn(`Blob ${path} still exists, trying with addRandomSuffix`);
-      const blob = await put(path, file, {
-        access: 'public',
-        contentType: options?.contentType,
-        addRandomSuffix: true,
-      });
-      return { url: blob.url };
+    // If blob still exists (delete might have failed), delete and retry once
+    if (error?.message?.includes('already exists') && options?.allowOverwrite) {
+      console.warn(`Blob ${path} still exists after delete, retrying...`);
+      try {
+        const { list, del } = await import('@vercel/blob');
+        const prefix = path.substring(0, path.lastIndexOf('/') + 1);
+        const { blobs } = await list({ prefix });
+        const existingBlob = blobs.find(b => b.pathname === path);
+        if (existingBlob) {
+          await del(existingBlob.url);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        // Retry upload
+        const blob = await put(path, file, {
+          access: 'public',
+          contentType: options?.contentType,
+        });
+        return { url: blob.url };
+      } catch (retryError) {
+        console.error('Retry failed:', retryError);
+        throw error; // Throw original error
+      }
     }
     throw error;
   }

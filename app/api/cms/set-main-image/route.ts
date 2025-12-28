@@ -114,53 +114,142 @@ export async function POST(request: NextRequest) {
     const sourceFile = new File([sourceBlob], 'main.jpg', { type: sourceBlob.type || 'image/jpeg' });
     const mainFile = new File([mainBlob], cleanFilename, { type: mainBlob.type || 'image/jpeg' });
 
-    // Upload swapped images (allow overwrite since we're swapping existing images)
-    // IMPORTANT: Upload new images FIRST, then delete old ones to prevent data loss
-    let newMainResult, newSourceResult;
+    // Strategy: True swap - both images remain, just swap their positions
+    // Use temporary paths to ensure we don't lose images if something fails
+    const tempMainPath = `rooms/${roomId}/_swap_main_${Date.now()}.jpg`;
+    const tempSourcePath = `rooms/${roomId}/_swap_source_${Date.now()}.jpg`;
+    
+    let tempMainResult, tempSourceResult;
     try {
-      [newMainResult, newSourceResult] = await Promise.all([
-        uploadImageToBlob(`rooms/${roomId}/main.jpg`, sourceFile, {
+      // Step 1: Upload both images to temporary paths first (safe - no overwrite risk)
+      [tempMainResult, tempSourceResult] = await Promise.all([
+        uploadImageToBlob(tempMainPath, sourceFile, {
           contentType: sourceBlob.type || 'image/jpeg',
-          allowOverwrite: true,
         }),
-        uploadImageToBlob(`rooms/${roomId}/${cleanFilename}`, mainFile, {
+        uploadImageToBlob(tempSourcePath, mainFile, {
           contentType: mainBlob.type || 'image/jpeg',
-          allowOverwrite: true,
         }),
       ]);
       
-      console.log('Successfully uploaded swapped images:', {
-        newMain: newMainResult.url,
-        newSource: newSourceResult.url
+      console.log('Successfully uploaded to temp paths:', {
+        tempMain: tempMainResult.url,
+        tempSource: tempSourceResult.url
       });
-    } catch (uploadError) {
-      console.error('Error uploading images to Blob Storage:', uploadError);
-      // Don't delete old images if upload failed - they're still needed!
+    } catch (tempUploadError) {
+      console.error('Error uploading to temp paths:', tempUploadError);
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Failed to upload images to Blob Storage',
-          details: uploadError instanceof Error ? uploadError.message : 'Unknown error',
+          error: 'Failed to prepare images for swap',
+          details: tempUploadError instanceof Error ? tempUploadError.message : 'Unknown error',
           note: 'Original images are preserved. Please try again.'
         },
         { status: 500 }
       );
     }
 
-    // Only delete old blobs AFTER successful upload
-    // Only delete if the URLs are different (to avoid deleting the new uploads)
+    // Step 2: Now that we have safe copies, delete old images at target paths
     try {
-      if (sourceImage.url !== newMainResult.url) {
-        await deleteImageFromBlob(sourceImage.url);
-        console.log('Deleted old source image:', sourceImage.url);
-      }
-      if (mainImage.url !== newSourceResult.url && mainImage.url !== newMainResult.url) {
-        await deleteImageFromBlob(mainImage.url);
-        console.log('Deleted old main image:', mainImage.url);
-      }
+      await Promise.all([
+        deleteImageFromBlob(mainImage.url).catch(err => 
+          console.warn('Could not delete old main image:', err)
+        ),
+        deleteImageFromBlob(sourceImage.url).catch(err => 
+          console.warn('Could not delete old source image:', err)
+        ),
+      ]);
+      
+      // Wait for deletions to propagate
+      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('Deleted old images at target paths');
     } catch (deleteError) {
-      console.error('Error deleting old blobs (non-fatal):', deleteError);
-      // Non-fatal - new images are already uploaded, old ones can be cleaned up later
+      console.error('Error deleting old images:', deleteError);
+      // Continue anyway - upload might still work
+    }
+
+    // Step 3: Download from temp and upload to final paths
+    let newMainResult, newSourceResult;
+    try {
+      const [tempMainResponse, tempSourceResponse] = await Promise.all([
+        fetch(tempMainResult.url),
+        fetch(tempSourceResult.url),
+      ]);
+      
+      if (!tempMainResponse.ok || !tempSourceResponse.ok) {
+        throw new Error('Failed to download from temp paths');
+      }
+      
+      const [tempMainBlob, tempSourceBlob] = await Promise.all([
+        tempMainResponse.blob(),
+        tempSourceResponse.blob(),
+      ]);
+      
+      // Upload to final paths
+      [newMainResult, newSourceResult] = await Promise.all([
+        uploadImageToBlob(`rooms/${roomId}/main.jpg`, new File([tempMainBlob], 'main.jpg', { type: tempMainBlob.type }), {
+          contentType: tempMainBlob.type || 'image/jpeg',
+        }),
+        uploadImageToBlob(`rooms/${roomId}/${cleanFilename}`, new File([tempSourceBlob], cleanFilename, { type: tempSourceBlob.type }), {
+          contentType: tempSourceBlob.type || 'image/jpeg',
+        }),
+      ]);
+      
+      console.log('Successfully swapped images:', {
+        newMain: newMainResult.url,
+        newSource: newSourceResult.url,
+        note: 'Both images preserved - only positions swapped'
+      });
+    } catch (finalUploadError) {
+      console.error('Error uploading to final paths:', finalUploadError);
+      
+      // Try to restore from temp files
+      try {
+        const [tempMainResponse, tempSourceResponse] = await Promise.all([
+          fetch(tempMainResult.url),
+          fetch(tempSourceResult.url),
+        ]);
+        
+        if (tempMainResponse.ok && tempSourceResponse.ok) {
+          const [tempMainBlob, tempSourceBlob] = await Promise.all([
+            tempMainResponse.blob(),
+            tempSourceResponse.blob(),
+          ]);
+          
+          // Try to restore original positions
+          await Promise.all([
+            uploadImageToBlob(`rooms/${roomId}/main.jpg`, new File([tempSourceBlob], 'main.jpg', { type: tempSourceBlob.type }), {
+              contentType: tempSourceBlob.type || 'image/jpeg',
+            }).catch(() => {}),
+            uploadImageToBlob(`rooms/${roomId}/${cleanFilename}`, new File([tempMainBlob], cleanFilename, { type: tempMainBlob.type }), {
+              contentType: tempMainBlob.type || 'image/jpeg',
+            }).catch(() => {}),
+          ]);
+          console.log('Attempted to restore original images from temp');
+        }
+      } catch (restoreError) {
+        console.error('Could not restore from temp:', restoreError);
+      }
+      
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Failed to complete image swap',
+          details: finalUploadError instanceof Error ? finalUploadError.message : 'Unknown error',
+          note: 'Attempted to restore original images. Please check and try again.'
+        },
+        { status: 500 }
+      );
+    }
+
+    // Step 4: Clean up temp files
+    try {
+      await Promise.all([
+        deleteImageFromBlob(tempMainResult.url).catch(() => {}),
+        deleteImageFromBlob(tempSourceResult.url).catch(() => {}),
+      ]);
+      console.log('Cleaned up temp swap files');
+    } catch (cleanupError) {
+      console.warn('Could not clean up temp files (non-fatal):', cleanupError);
     }
 
     // Update room metadata in Redis if needed
