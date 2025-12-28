@@ -1,9 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { revalidatePath } from 'next/cache';
+import { uploadImageToBlob } from '@/lib/blob-storage';
+import { Redis } from '@upstash/redis';
+
+const ROOM_METADATA_KEY = 'room-metadata';
+const ROOM_ORDER_KEY = 'room-order';
+
+const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  ? new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    })
+  : null;
 
 export const maxDuration = 60; // 60 seconds for large uploads
+
+interface RoomMetadata {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  amenities: string[];
+  bedInfo: string;
+  maxGuests: number;
+  size: string;
+  address: string;
+  mapUrl: string;
+  altText?: {
+    en?: string;
+    ja?: string;
+    ko?: string;
+    zh?: string;
+  };
+  lastUpdated: number;
+  mainImageUrl?: string; // Store Blob URL for main image
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,237 +81,182 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get next room number
-    const roomsDir = join(process.cwd(), 'public', 'images', 'rooms');
-    
-    // Ensure the rooms directory exists first
-    try {
-      await mkdir(roomsDir, { recursive: true });
-    } catch (mkdirError: any) {
-      console.error('Error creating rooms directory:', mkdirError);
-      if (mkdirError.code === 'EROFS' || mkdirError.code === 'EACCES' || mkdirError.code === 'EPERM') {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Cannot create rooms directory in production environment',
-            details: 'File system is read-only. Room creation requires write access to the file system.',
-            code: mkdirError.code
-          },
-          { status: 403 }
-        );
+    // Get next room number from Redis or fallback
+    let roomId: string;
+    if (redis) {
+      const allRooms = await redis.get<Record<string, RoomMetadata>>(ROOM_METADATA_KEY) || {};
+      const roomNumbers = Object.keys(allRooms)
+        .map(id => parseInt(id.replace('room', '')) || 0)
+        .filter(num => num > 0)
+        .sort((a, b) => b - a);
+      const nextRoomNumber = roomNumbers.length > 0 ? roomNumbers[0] + 1 : 1;
+      roomId = `room${nextRoomNumber}`;
+    } else {
+      // Fallback: try to read from lib/rooms.ts for local dev
+      try {
+        const { readFile } = await import('node:fs/promises');
+        const { join } = await import('node:path');
+        const existingRooms = await readFile(join(process.cwd(), 'lib', 'rooms.ts'), 'utf-8');
+        const roomMatches = existingRooms.match(/room(\d+):/g) || [];
+        const roomNumbers = roomMatches.map(m => parseInt(m.match(/\d+/)![0])).sort((a, b) => b - a);
+        const nextRoomNumber = roomNumbers.length > 0 ? roomNumbers[0] + 1 : 1;
+        roomId = `room${nextRoomNumber}`;
+      } catch {
+        roomId = `room${Date.now()}`; // Fallback to timestamp
       }
-      // ENOENT means parent doesn't exist - in serverless, public directory is read-only
-      if (mkdirError.code === 'ENOENT') {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Cannot create rooms directory in production',
-            details: `The directory structure does not exist: ${roomsDir}. In serverless environments (like Vercel), the public directory is read-only and cannot be written to at runtime.`,
-            code: mkdirError.code,
-            note: 'Room creation requires write access to the file system. In production, you must add rooms via code commits to your repository.'
-          },
-          { status: 500 }
-        );
-      }
-      throw mkdirError;
-    }
-    
-    const existingRooms = await readFile(join(process.cwd(), 'lib', 'rooms.ts'), 'utf-8');
-    const roomMatches = existingRooms.match(/room(\d+):/g) || [];
-    const roomNumbers = roomMatches.map(m => parseInt(m.match(/\d+/)![0])).sort((a, b) => b - a);
-    const nextRoomNumber = roomNumbers.length > 0 ? roomNumbers[0] + 1 : 1;
-    const roomId = `room${nextRoomNumber}`;
-
-    // Create room directory
-    const roomDir = join(roomsDir, roomId);
-    try {
-      await mkdir(roomDir, { recursive: true });
-    } catch (mkdirError: any) {
-      console.error('Error creating room directory:', mkdirError);
-      console.error('Room directory path:', roomDir);
-      if (mkdirError.code === 'EROFS' || mkdirError.code === 'EACCES' || mkdirError.code === 'EPERM') {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Cannot create room directory in production environment',
-            details: 'File system is read-only. Room creation requires write access to the file system.',
-            code: mkdirError.code
-          },
-          { status: 403 }
-        );
-      }
-      if (mkdirError.code === 'ENOENT') {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Cannot create room directory in production',
-            details: `The directory structure does not exist: ${roomsDir}. In serverless environments (like Vercel), the public directory is read-only and cannot be written to at runtime. Room creation must be done locally or via code commits.`,
-            code: mkdirError.code,
-            path: roomDir,
-            note: 'To add rooms in production: 1) Add room locally, 2) Commit the changes to your repository, 3) Deploy. Alternatively, use cloud storage (Vercel Blob, AWS S3) for dynamic file uploads.'
-          },
-          { status: 500 }
-        );
-      }
-      throw mkdirError;
     }
 
-    // Save images: first as main.jpg, rest as image-1.jpg, image-2.jpg, etc.
-    const savedImages: string[] = [];
+    // Upload images to Blob Storage
+    const uploadedImages: { url: string; filename: string }[] = [];
+    let mainImageUrl: string | undefined;
+
     try {
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
-        const bytes = await image.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        
-        let imagePath: string;
+        let filename: string;
         if (i === 0) {
-          // First image is main.jpg
-          imagePath = join(roomDir, 'main.jpg');
+          filename = 'main.jpg';
         } else {
-          // Additional images are image-1.jpg, image-2.jpg, etc.
-          imagePath = join(roomDir, `image-${i}.jpg`);
+          filename = `image-${i}.jpg`;
         }
         
-        try {
-          await writeFile(imagePath, buffer);
-          savedImages.push(imagePath);
-        } catch (writeError: any) {
-          console.error(`Error saving image ${i}:`, writeError);
-          if (writeError.code === 'EROFS' || writeError.code === 'EACCES' || writeError.code === 'EPERM') {
-            // Clean up any images that were saved before the error
-            // (In production, we can't delete, but at least report what happened)
-            return NextResponse.json(
-              {
-                success: false,
-                error: 'Cannot save images in production environment',
-                details: `File system is read-only. ${savedImages.length > 0 ? `${savedImages.length} image(s) were saved before the error.` : 'No images could be saved.'}`,
-                code: writeError.code,
-                savedImages: savedImages.length
-              },
-              { status: 403 }
-            );
-          }
-          throw writeError;
+        const blobPath = `rooms/${roomId}/${filename}`;
+        const { url } = await uploadImageToBlob(blobPath, image, {
+          contentType: image.type,
+        });
+        
+        uploadedImages.push({ url, filename });
+        if (i === 0) {
+          mainImageUrl = url;
         }
       }
-    } catch (imageError) {
-      console.error('Error processing images:', imageError);
-      throw imageError;
-    }
-
-    // Read current rooms.ts file
-    const roomsFilePath = join(process.cwd(), 'lib', 'rooms.ts');
-    let roomsFileContent: string;
-    try {
-      roomsFileContent = await readFile(roomsFilePath, 'utf-8');
-    } catch (readError: any) {
-      console.error('Error reading rooms.ts file:', readError);
+    } catch (blobError: any) {
+      console.error('Error uploading images to Blob Storage:', blobError);
+      // Try to clean up any uploaded images
+      const { deleteImageFromBlob } = await import('@/lib/blob-storage');
+      for (const img of uploadedImages) {
+        try {
+          await deleteImageFromBlob(img.url);
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to read room metadata file',
-          details: readError.message || 'Could not read lib/rooms.ts file',
-          code: readError.code
+          error: 'Failed to upload images to Blob Storage',
+          details: blobError.message || 'Error uploading images',
         },
         { status: 500 }
       );
     }
 
-    // Find the insertion point - after the last room entry (room5)
-    const room5Match = roomsFileContent.match(/(room5:\s*\{[\s\S]*?\},?\s*)/);
-    let insertPosition: number;
-    
-    if (room5Match && room5Match.index !== undefined) {
-      insertPosition = room5Match.index + room5Match[0].length;
-    } else {
-      const lastRoomMatch = roomsFileContent.match(/(room\d+):\s*\{[\s\S]*?\},?\s*(?=\s*\/\/|\s*\/\*|\s*\};)/);
-      if (lastRoomMatch && lastRoomMatch.index !== undefined) {
-        insertPosition = lastRoomMatch.index + lastRoomMatch[0].length;
-      } else {
-        const roomMetadataEnd = roomsFileContent.lastIndexOf('};');
-        if (roomMetadataEnd === -1) {
-          return NextResponse.json(
-            { success: false, error: 'Could not find roomMetadata object end' },
-            { status: 500 }
-          );
+    // Build room metadata
+    const altText: RoomMetadata['altText'] = {};
+    if (altTextEn) altText.en = altTextEn;
+    if (altTextJa) altText.ja = altTextJa;
+    if (altTextKo) altText.ko = altTextKo;
+    if (altTextZh) altText.zh = altTextZh;
+
+    const roomMetadata: RoomMetadata = {
+      id: roomId,
+      name,
+      type,
+      description,
+      amenities: amenitiesArray.length > 0 ? amenitiesArray : ['Wi-Fi', 'Private Bathroom'],
+      bedInfo,
+      maxGuests: parseInt(maxGuests) || 2,
+      size: formattedSize,
+      address,
+      mapUrl,
+      altText: Object.keys(altText).length > 0 ? altText : undefined,
+      lastUpdated: Date.now(),
+      mainImageUrl,
+    };
+
+    // Save room metadata to Redis
+    if (redis) {
+      try {
+        const allRooms = await redis.get<Record<string, RoomMetadata>>(ROOM_METADATA_KEY) || {};
+        allRooms[roomId] = roomMetadata;
+        await redis.set(ROOM_METADATA_KEY, allRooms);
+
+        // Add to room order
+        const currentOrder = await redis.get<string[]>(ROOM_ORDER_KEY) || [];
+        if (!currentOrder.includes(roomId)) {
+          currentOrder.push(roomId);
+          await redis.set(ROOM_ORDER_KEY, currentOrder);
         }
-        insertPosition = roomMetadataEnd;
+      } catch (redisError) {
+        console.error('Error saving to Redis:', redisError);
+        // Continue - we'll try to save to file as fallback
       }
     }
 
-    // Build new room entry
-    const timestamp = Date.now();
-    const escapedName = name.replace(/'/g, "\\'").replace(/\n/g, ' ');
-    const escapedType = type.replace(/'/g, "\\'").replace(/\n/g, ' ');
-    const escapedDesc = description.replace(/'/g, "\\'").replace(/\n/g, ' ');
-    const escapedBedInfo = bedInfo.replace(/'/g, "\\'").replace(/\n/g, ' ');
-    const escapedSize = formattedSize.replace(/'/g, "\\'").replace(/\n/g, ' ');
-    const escapedAddress = address.replace(/'/g, "\\'").replace(/\n/g, ' ');
-    const escapedMapUrl = mapUrl.replace(/'/g, "\\'").replace(/\n/g, ' ');
-    
-    const altTextParts = [];
-    if (altTextEn) altTextParts.push(`en: '${altTextEn.replace(/'/g, "\\'").replace(/\n/g, ' ')}'`);
-    if (altTextJa) altTextParts.push(`ja: '${altTextJa.replace(/'/g, "\\'").replace(/\n/g, ' ')}'`);
-    if (altTextKo) altTextParts.push(`ko: '${altTextKo.replace(/'/g, "\\'").replace(/\n/g, ' ')}'`);
-    if (altTextZh) altTextParts.push(`zh: '${altTextZh.replace(/'/g, "\\'").replace(/\n/g, ' ')}'`);
-    
-    const altTextContent = altTextParts.length > 0 
-      ? `,\n    altText: {\n      ${altTextParts.join(',\n      ')},\n    }`
-      : '';
-    
-    const amenitiesStr = amenitiesArray.length > 0 
-      ? amenitiesArray.map(a => `'${a.replace(/'/g, "\\'")}'`).join(', ')
-      : "'Wi-Fi', 'Private Bathroom'";
-    
-    const newRoomEntry = `,\n  ${roomId}: {
+    // Fallback: Try to save to lib/rooms.ts for local dev (optional)
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        const { readFile, writeFile } = await import('node:fs/promises');
+        const { join } = await import('node:path');
+        const roomsFilePath = join(process.cwd(), 'lib', 'rooms.ts');
+        const roomsFileContent = await readFile(roomsFilePath, 'utf-8');
+
+        // Find insertion point
+        const lastRoomMatch = roomsFileContent.match(/(room\d+):\s*\{[\s\S]*?\},?\s*(?=\s*\/\/|\s*\/\*|\s*\};)/);
+        let insertPosition: number;
+        
+        if (lastRoomMatch && lastRoomMatch.index !== undefined) {
+          insertPosition = lastRoomMatch.index + lastRoomMatch[0].length;
+        } else {
+          const roomMetadataEnd = roomsFileContent.lastIndexOf('};');
+          insertPosition = roomMetadataEnd === -1 ? roomsFileContent.length : roomMetadataEnd;
+        }
+
+        // Build room entry (note: mainImageUrl won't be in file, it's in Blob)
+        const escapedName = name.replace(/'/g, "\\'").replace(/\n/g, ' ');
+        const escapedType = type.replace(/'/g, "\\'").replace(/\n/g, ' ');
+        const escapedDesc = description.replace(/'/g, "\\'").replace(/\n/g, ' ');
+        const escapedBedInfo = bedInfo.replace(/'/g, "\\'").replace(/\n/g, ' ');
+        const escapedSize = formattedSize.replace(/'/g, "\\'").replace(/\n/g, ' ');
+        const escapedAddress = address.replace(/'/g, "\\'").replace(/\n/g, ' ');
+        const escapedMapUrl = mapUrl.replace(/'/g, "\\'").replace(/\n/g, ' ');
+        
+        const altTextParts = [];
+        if (altTextEn) altTextParts.push(`en: '${altTextEn.replace(/'/g, "\\'").replace(/\n/g, ' ')}'`);
+        if (altTextJa) altTextParts.push(`ja: '${altTextJa.replace(/'/g, "\\'").replace(/\n/g, ' ')}'`);
+        if (altTextKo) altTextParts.push(`ko: '${altTextKo.replace(/'/g, "\\'").replace(/\n/g, ' ')}'`);
+        if (altTextZh) altTextParts.push(`zh: '${altTextZh.replace(/'/g, "\\'").replace(/\n/g, ' ')}'`);
+        
+        const altTextContent = altTextParts.length > 0 
+          ? `,\n    altText: {\n      ${altTextParts.join(',\n      ')},\n    }`
+          : '';
+        
+        const amenitiesStr = roomMetadata.amenities.map(a => `'${a.replace(/'/g, "\\'")}'`).join(', ');
+        
+        const newRoomEntry = `,\n  ${roomId}: {
     id: '${roomId}',
     name: '${escapedName}',
     type: '${escapedType}',
     description: '${escapedDesc}',
     amenities: [${amenitiesStr}],
     bedInfo: '${escapedBedInfo}',
-    maxGuests: ${parseInt(maxGuests) || 2},
+    maxGuests: ${roomMetadata.maxGuests},
     size: '${escapedSize}',
     address: '${escapedAddress}',
     mapUrl: '${escapedMapUrl}'${altTextContent},
-    lastUpdated: ${timestamp},
+    lastUpdated: ${roomMetadata.lastUpdated},
   },`;
 
-    // Insert new room entry
-    const newContent = 
-      roomsFileContent.slice(0, insertPosition) + 
-      newRoomEntry + 
-      roomsFileContent.slice(insertPosition);
+        const newContent = 
+          roomsFileContent.slice(0, insertPosition) + 
+          newRoomEntry + 
+          roomsFileContent.slice(insertPosition);
 
-    // Write updated file
-    try {
-      await writeFile(roomsFilePath, newContent, 'utf-8');
-    } catch (writeError: any) {
-      console.error('File write error:', writeError);
-      // In production (serverless), file writes might fail
-      if (writeError.code === 'EROFS' || writeError.code === 'EACCES' || writeError.code === 'EPERM') {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Cannot add room in production environment',
-            details: 'File system is read-only. Room images have been saved, but room metadata cannot be updated. You may need to manually add the room entry to lib/rooms.ts in your repository.',
-            code: writeError.code,
-            roomId,
-            note: 'The room folder and images were created, but the metadata file could not be updated. Please add the room entry manually to lib/rooms.ts and commit it to your repository.'
-          },
-          { status: 403 }
-        );
+        await writeFile(roomsFilePath, newContent, 'utf-8');
+      } catch (fileError) {
+        console.error('Error saving to file (non-fatal):', fileError);
+        // Non-fatal - metadata is in Redis
       }
-      throw writeError;
-    }
-
-    // Update CMS config timestamp
-    try {
-      await updateCMSConfig('rooms');
-    } catch (configError) {
-      console.error('Error updating CMS config (non-fatal):', configError);
-      // Don't fail the whole operation if config update fails
     }
 
     // Revalidate the home page
@@ -289,7 +265,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       message: `Room ${roomId} added successfully`,
-      roomId 
+      roomId,
+      mainImageUrl,
     });
   } catch (error) {
     console.error('Error adding room:', error);
@@ -301,19 +278,6 @@ export async function POST(request: NextRequest) {
     console.error('Error code:', errorCode);
     if (errorStack) {
       console.error('Error stack:', errorStack);
-    }
-    
-    // Check if it's a file system error
-    if (errorCode === 'EROFS' || errorCode === 'EACCES' || errorCode === 'EPERM') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Cannot add room in production environment',
-          details: 'File system is read-only. Room creation requires write access to the file system.',
-          code: errorCode
-        },
-        { status: 403 }
-      );
     }
     
     return NextResponse.json(
@@ -328,75 +292,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-async function updateCMSConfig(type: 'hero' | 'rooms') {
-  try {
-    const configPath = join(process.cwd(), 'lib', 'rooms.ts');
-    const configContent = await readFile(configPath, 'utf-8');
-    const timestamp = Date.now();
-
-    const propertyName = type === 'hero' ? 'heroLastUpdated' : 'roomsLastUpdated';
-    
-    // Find the cmsConfig object and rebuild it properly to avoid duplicates
-    const configObjectPattern = /export let cmsConfig: CMSConfig = \{([\s\S]*?)\};/;
-    const match = configContent.match(configObjectPattern);
-    
-    if (match) {
-      let configBody = match[1];
-      
-      // Remove ALL occurrences of the property we're updating (to handle duplicates)
-      const propertyPattern = new RegExp(`\\s*${propertyName}:\\s*\\d+[,\\n]*`, 'g');
-      configBody = configBody.replace(propertyPattern, '');
-      
-      // Also remove the other property if it exists (to rebuild cleanly)
-      const otherPropertyName = type === 'hero' ? 'roomsLastUpdated' : 'heroLastUpdated';
-      const otherPropertyPattern = new RegExp(`\\s*${otherPropertyName}:\\s*\\d+[,\\n]*`, 'g');
-      const otherPropertyMatch = configBody.match(new RegExp(`${otherPropertyName}:\\s*\\d+`));
-      let otherPropertyValue = '';
-      if (otherPropertyMatch) {
-        otherPropertyValue = otherPropertyMatch[0];
-        configBody = configBody.replace(otherPropertyPattern, '');
-      }
-      
-      // Clean up extra commas and whitespace
-      configBody = configBody.trim().replace(/^,|,$/g, '').trim();
-      
-      // Build new config body with both properties
-      const properties = [];
-      if (type === 'hero') {
-        properties.push(`  heroLastUpdated: ${timestamp}`);
-        if (otherPropertyValue) {
-          properties.push(`  ${otherPropertyValue}`);
-        } else {
-          properties.push(`  roomsLastUpdated: ${Date.now()}`);
-        }
-      } else {
-        if (otherPropertyValue) {
-          properties.push(`  ${otherPropertyValue}`);
-        } else {
-          properties.push(`  heroLastUpdated: ${Date.now()}`);
-        }
-        properties.push(`  roomsLastUpdated: ${timestamp}`);
-      }
-      
-      const newConfigBody = properties.join(',\n');
-      const updatedContent = configContent.replace(
-        configObjectPattern,
-        `export let cmsConfig: CMSConfig = {\n${newConfigBody},\n};`
-      );
-      
-      await writeFile(configPath, updatedContent, 'utf-8');
-    } else {
-      // Fallback: if pattern doesn't match, try simple replace (but replace ALL occurrences)
-      const propertyPattern = new RegExp(`${propertyName}:\\s*\\d+`, 'g');
-      const updatedContent = configContent.replace(
-        propertyPattern,
-        `${propertyName}: ${timestamp}`
-      );
-      await writeFile(configPath, updatedContent, 'utf-8');
-    }
-  } catch (error) {
-    console.error('Error updating CMS config:', error);
-  }
-}
-

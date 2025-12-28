@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readdir, stat } from 'fs/promises';
-import { join } from 'path';
+import { listRoomImages } from '@/lib/blob-storage';
 import { Redis } from '@upstash/redis';
+
+const DELETED_IMAGES_KEY = 'deleted-images';
 
 const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
   ? new Redis({
@@ -22,88 +23,58 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const roomDir = join(process.cwd(), 'public', 'images', 'rooms', roomId);
-    
-    try {
-      const files = await readdir(roomDir);
-      
-      // Get list of deleted files from Redis (for production where file system is read-only)
-      let deletedFiles: string[] = [];
-      if (redis) {
-        try {
-          const deletedKey = `deleted-images:${roomId}`;
-          deletedFiles = await redis.get<string[]>(deletedKey) || [];
-        } catch (error) {
-          console.error('Error fetching deleted files from Redis:', error);
+    // Get deleted images from Redis
+    let deletedImageFilenames: string[] = [];
+    if (redis) {
+      try {
+        const kvDeletedImages = await redis.smembers(`deleted-images:${roomId}`);
+        if (kvDeletedImages) {
+          deletedImageFilenames = Array.from(kvDeletedImages);
+        }
+      } catch (error) {
+        console.error('Error fetching deleted images from Redis:', error);
+      }
+    }
+
+    // List images from Blob Storage
+    const blobImages = await listRoomImages(roomId);
+
+    // Filter out deleted images
+    const filteredImages = blobImages.filter(img => {
+      // Check if image is marked as deleted in Redis
+      if (deletedImageFilenames.includes(img.filename)) {
+        return false;
+      }
+      // Also filter out hidden images that are marked as deleted
+      if (img.isHidden) {
+        const originalFilename = img.filename.replace('_hidden_', '');
+        if (deletedImageFilenames.includes(originalFilename)) {
+          return false;
         }
       }
-      
-      // Filter image files and exclude hidden files, deleted files (renamed), and files tracked as deleted in Redis
-      const imageFiles = files.filter(file => {
-        const ext = file.toLowerCase();
-        const isImage = ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp');
-        const isNotHidden = !file.startsWith('_hidden_');
-        const isNotDeleted = !file.startsWith('_deleted_');
-        const isNotTrackedAsDeleted = !deletedFiles.includes(file);
-        return isImage && isNotHidden && isNotDeleted && isNotTrackedAsDeleted;
-      });
+      return true;
+    });
 
-      // Get file stats to sort by modification time (preserves original order)
-      const filesWithStats = await Promise.all(
-        imageFiles.map(async (file) => {
-          const filePath = join(roomDir, file);
-          const stats = await stat(filePath);
-          return {
-            file,
-            mtime: stats.mtime.getTime(),
-          };
-        })
-      );
+    // Sort images: main first, then by filename
+    const sortedImages = filteredImages.sort((a, b) => {
+      if (a.isMain && !b.isMain) return -1;
+      if (!a.isMain && b.isMain) return 1;
+      return a.filename.localeCompare(b.filename);
+    });
 
-      // Sort by modification time (oldest first) to preserve original order
-      // This way, when an image becomes main.jpg, it stays in its original position
-      filesWithStats.sort((a, b) => a.mtime - b.mtime);
-      
-      const sortedImageFiles = filesWithStats.map(item => item.file);
+    // Format response
+    const images = sortedImages.map((img, index) => ({
+      filename: img.filename,
+      url: img.url,
+      isMain: img.isMain,
+      isHidden: img.isHidden,
+      order: index,
+    }));
 
-      // Check for hidden images (but exclude deleted ones)
-      const hiddenFiles = files.filter(file => 
-        file.startsWith('_hidden_') && !file.startsWith('_deleted_')
-      );
-      const hiddenImages = hiddenFiles
-        .filter(file => {
-          const ext = file.toLowerCase();
-          return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp');
-        })
-        .map(file => ({
-          filename: file,
-          url: `/images/rooms/${roomId}/${file}`,
-          isMain: file === '_hidden_main.jpg',
-          isHidden: true,
-        }));
-
-      const images = sortedImageFiles.map((file, index) => {
-        const filePath = join(roomDir, file);
-        return {
-          filename: file,
-          url: `/images/rooms/${roomId}/${file}`,
-          isMain: file === 'main.jpg',
-          isHidden: false,
-          order: index,
-        };
-      });
-
-      return NextResponse.json({
-        success: true,
-        images: [...images, ...hiddenImages],
-      });
-    } catch (error) {
-      // Directory doesn't exist or can't be read
-      return NextResponse.json({
-        success: true,
-        images: [],
-      });
-    }
+    return NextResponse.json({
+      success: true,
+      images,
+    });
   } catch (error) {
     console.error('Error fetching room images:', error);
     return NextResponse.json(
@@ -112,4 +83,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

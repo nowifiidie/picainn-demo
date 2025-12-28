@@ -47,7 +47,8 @@ export default function PropertyGallery() {
         // Merge room images with metadata
         const mergedRooms: Room[] = roomImages
           .map((roomImg) => {
-            const metadata = getRoomMetadata(roomImg.roomId);
+            // Use metadata from API if available (Blob Storage rooms), otherwise fall back to static metadata
+            const metadata = roomImg.metadata || getRoomMetadata(roomImg.roomId);
             if (!metadata) {
               console.warn(`No metadata found for ${roomImg.roomId}`);
               return null;
@@ -59,8 +60,13 @@ export default function PropertyGallery() {
             // Combine main image with additional images
             // Add cache busting timestamp to image URLs using lastUpdated from metadata
             const timestamp = metadata.lastUpdated || Date.now();
-            const cacheBustMain = `${roomImg.mainImage}?t=${timestamp}`;
-            const cacheBustAdditional = roomImg.additionalImages.map(img => `${img}?t=${timestamp}`);
+            // For Blob URLs, they already include cache parameters, so only add if it's a local path
+            const cacheBustMain = roomImg.mainImage.startsWith('http') 
+              ? roomImg.mainImage 
+              : `${roomImg.mainImage}?t=${timestamp}`;
+            const cacheBustAdditional = roomImg.additionalImages.map(img => 
+              img.startsWith('http') ? img : `${img}?t=${timestamp}`
+            );
             const allImages = [cacheBustMain, ...cacheBustAdditional];
 
             return {

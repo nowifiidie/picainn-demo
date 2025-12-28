@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { rename } from 'fs/promises';
-import { join } from 'path';
 import { revalidatePath } from 'next/cache';
+import { listRoomImages, uploadImageToBlob, deleteImageFromBlob } from '@/lib/blob-storage';
 
 export const maxDuration = 30;
 
@@ -16,9 +15,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const roomDir = join(process.cwd(), 'public', 'images', 'rooms', roomId);
-    const currentPath = join(roomDir, filename);
+    // Don't allow hiding main.jpg - it's required
+    if (hide && (filename === 'main.jpg' || filename === '_hidden_main.jpg')) {
+      return NextResponse.json(
+        { success: false, error: 'Cannot hide the main image. Set another image as main first.' },
+        { status: 400 }
+      );
+    }
 
+    // Get the image from Blob Storage
+    const roomImages = await listRoomImages(roomId);
+    const currentImage = roomImages.find(img => img.filename === filename);
+
+    if (!currentImage) {
+      return NextResponse.json(
+        { success: false, error: 'Image not found' },
+        { status: 404 }
+      );
+    }
+
+    // Determine new filename
     let newFilename: string;
     if (hide) {
       // Hide: add _hidden_ prefix
@@ -28,31 +44,44 @@ export async function POST(request: NextRequest) {
       newFilename = filename.startsWith('_hidden_') ? filename.replace('_hidden_', '') : filename;
     }
 
-    const newPath = join(roomDir, newFilename);
-
-    // Don't allow hiding main.jpg - it's required
-    if (hide && (filename === 'main.jpg' || filename === '_hidden_main.jpg')) {
-      return NextResponse.json(
-        { success: false, error: 'Cannot hide the main image. Set another image as main first.' },
-        { status: 400 }
-      );
-    }
-
-    try {
-      await rename(currentPath, newPath);
-      revalidatePath('/');
+    // If filename hasn't changed, nothing to do
+    if (newFilename === filename) {
       return NextResponse.json({
         success: true,
-        message: hide ? 'Image hidden successfully' : 'Image shown successfully',
+        message: hide ? 'Image is already hidden' : 'Image is already visible',
         newFilename,
       });
-    } catch (error) {
-      console.error('Error toggling image visibility:', error);
+    }
+
+    // Download the image
+    const imageResponse = await fetch(currentImage.url);
+    if (!imageResponse.ok) {
       return NextResponse.json(
-        { success: false, error: 'Failed to toggle image visibility' },
+        { success: false, error: 'Failed to download image' },
         { status: 500 }
       );
     }
+
+    const imageBlob = await imageResponse.blob();
+    const imageFile = new File([imageBlob], newFilename, { type: imageBlob.type });
+
+    // Upload to new path
+    const newBlobPath = `rooms/${roomId}/${newFilename}`;
+    await uploadImageToBlob(newBlobPath, imageFile, {
+      contentType: imageBlob.type,
+    });
+
+    // Delete old blob
+    await deleteImageFromBlob(currentImage.url).catch(() => {
+      // Non-fatal if deletion fails
+    });
+
+    revalidatePath('/');
+    return NextResponse.json({
+      success: true,
+      message: hide ? 'Image hidden successfully' : 'Image shown successfully',
+      newFilename,
+    });
   } catch (error) {
     console.error('Error in toggle-image-visibility route:', error);
     return NextResponse.json(
@@ -61,4 +90,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

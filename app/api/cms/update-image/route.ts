@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, rm } from 'fs/promises';
-import { join } from 'path';
 import { revalidatePath } from 'next/cache';
+import { uploadImageToBlob, deleteImageFromBlob, listRoomImages } from '@/lib/blob-storage';
 
 export const maxDuration = 60;
 
@@ -26,26 +25,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const roomDir = join(process.cwd(), 'public', 'images', 'rooms', roomId);
-    const oldImagePath = join(roomDir, filename);
+    // Find the old image URL from Blob Storage
+    const roomImages = await listRoomImages(roomId);
+    const oldImage = roomImages.find(img => img.filename === filename);
 
     // Delete old image if it exists
-    try {
-      await rm(oldImagePath);
-    } catch {
-      // File doesn't exist, that's okay
+    if (oldImage) {
+      try {
+        await deleteImageFromBlob(oldImage.url);
+      } catch (error) {
+        console.error('Error deleting old image (non-fatal):', error);
+      }
     }
 
-    // Save new image
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const newImagePath = join(roomDir, filename);
-    await writeFile(newImagePath, buffer);
+    // Upload new image to Blob Storage
+    const blobPath = `rooms/${roomId}/${filename}`;
+    const { url } = await uploadImageToBlob(blobPath, image, {
+      contentType: image.type,
+    });
 
     revalidatePath('/');
     return NextResponse.json({
       success: true,
       message: 'Image updated successfully',
+      url,
     });
   } catch (error) {
     console.error('Error updating image:', error);
@@ -55,4 +58,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile, writeFile, stat, utimes } from 'fs/promises';
-import { join } from 'path';
 import { revalidatePath } from 'next/cache';
+import { listRoomImages, uploadImageToBlob, deleteImageFromBlob } from '@/lib/blob-storage';
 
 export const maxDuration = 30;
 
@@ -16,75 +15,108 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const roomDir = join(process.cwd(), 'public', 'images', 'rooms', roomId);
-    const currentMainPath = join(roomDir, 'main.jpg');
-    const sourcePath = join(roomDir, filename);
-
-    try {
-      // Check if the selected image is already main.jpg
-      if (filename === 'main.jpg') {
-        return NextResponse.json({
-          success: true,
-          message: 'This image is already the main image',
-        });
-      }
-
-      // Check if source file exists
-      try {
-        await stat(sourcePath);
-      } catch {
-        return NextResponse.json(
-          { success: false, error: 'Source image not found' },
-          { status: 404 }
-        );
-      }
-
-      // Read both files
-      const mainImageData = await readFile(currentMainPath);
-      const sourceImageData = await readFile(sourcePath);
-
-      // Get modification times to preserve them
-      const mainStats = await stat(currentMainPath);
-      const sourceStats = await stat(sourcePath);
-
-      // Swap the image content (not the filenames)
-      // Write source image content to main.jpg
-      await writeFile(currentMainPath, sourceImageData);
-      
-      // Write main image content to source file
-      await writeFile(sourcePath, mainImageData);
-
-      // Update modification times to current time to ensure proper sorting
-      // This ensures the swapped images are properly sorted
-      const now = new Date();
-      await Promise.all([
-        utimes(currentMainPath, now, now),
-        utimes(sourcePath, now, now)
-      ]);
-
-      // Revalidate paths to clear Next.js cache
-      revalidatePath('/');
-      revalidatePath(`/images/rooms/${roomId}/main.jpg`);
-      revalidatePath(`/images/rooms/${roomId}/${filename}`);
-
+    // Check if the selected image is already main.jpg
+    if (filename === 'main.jpg') {
       return NextResponse.json({
         success: true,
-        message: 'Main image swapped successfully',
-        timestamp: Date.now(), // Return timestamp for cache busting
+        message: 'This image is already the main image',
       });
-    } catch (error) {
-      console.error('Error setting main image:', error);
+    }
+
+    // Get all room images from Blob Storage
+    const roomImages = await listRoomImages(roomId);
+    const sourceImage = roomImages.find(img => img.filename === filename);
+    const mainImage = roomImages.find(img => img.isMain && img.filename === 'main.jpg');
+
+    if (!sourceImage) {
       return NextResponse.json(
-        { success: false, error: 'Failed to set main image' },
+        { success: false, error: 'Source image not found' },
+        { status: 404 }
+      );
+    }
+
+    if (!mainImage) {
+      return NextResponse.json(
+        { success: false, error: 'Main image not found' },
+        { status: 404 }
+      );
+    }
+
+    // Download both images
+    const [sourceResponse, mainResponse] = await Promise.all([
+      fetch(sourceImage.url),
+      fetch(mainImage.url),
+    ]);
+
+    if (!sourceResponse.ok || !mainResponse.ok) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to download images' },
         { status: 500 }
       );
     }
+
+    const [sourceBlob, mainBlob] = await Promise.all([
+      sourceResponse.blob(),
+      mainResponse.blob(),
+    ]);
+
+    // Convert to Files for upload
+    const sourceFile = new File([sourceBlob], 'main.jpg', { type: sourceBlob.type });
+    const mainFile = new File([mainBlob], filename, { type: mainBlob.type });
+
+    // Upload swapped images
+    const [newMainResult, newSourceResult] = await Promise.all([
+      uploadImageToBlob(`rooms/${roomId}/main.jpg`, sourceFile, {
+        contentType: sourceBlob.type,
+      }),
+      uploadImageToBlob(`rooms/${roomId}/${filename}`, mainFile, {
+        contentType: mainBlob.type,
+      }),
+    ]);
+
+    // Delete old blobs
+    await Promise.all([
+      deleteImageFromBlob(sourceImage.url).catch(() => {}),
+      deleteImageFromBlob(mainImage.url).catch(() => {}),
+    ]);
+
+    // Update room metadata in Redis if needed
+    const { Redis } = await import('@upstash/redis');
+    const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+      ? new Redis({
+          url: process.env.KV_REST_API_URL,
+          token: process.env.KV_REST_API_TOKEN,
+        })
+      : null;
+
+    if (redis) {
+      try {
+        const ROOM_METADATA_KEY = 'room-metadata';
+        const allRooms = await redis.get<Record<string, any>>(ROOM_METADATA_KEY) || {};
+        if (allRooms[roomId]) {
+          allRooms[roomId].mainImageUrl = newMainResult.url;
+          allRooms[roomId].lastUpdated = Date.now();
+          await redis.set(ROOM_METADATA_KEY, allRooms);
+        }
+      } catch (error) {
+        console.error('Error updating room metadata (non-fatal):', error);
+      }
+    }
+
+    revalidatePath('/');
+    revalidatePath(`/images/rooms/${roomId}/main.jpg`);
+    revalidatePath(`/images/rooms/${roomId}/${filename}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Main image swapped successfully',
+      timestamp: Date.now(),
+    });
   } catch (error) {
-    console.error('Error in set-main-image route:', error);
+    console.error('Error setting main image:', error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: 'Failed to set main image' },
       { status: 500 }
     );
   }
 }
-
