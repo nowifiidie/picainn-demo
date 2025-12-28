@@ -345,8 +345,10 @@ export default function AdminPage() {
         body: JSON.stringify({ roomId, filename }),
       });
       const result = await response.json();
+      console.log('Set main image response:', result);
+      
       if (result.success) {
-        // Wait a bit for file system operations to complete
+        // Wait a bit for Blob Storage operations to complete
         await new Promise(resolve => setTimeout(resolve, 500));
         // Force a hard refresh by clearing the image state first and updating refresh key
         setRoomImages([]);
@@ -356,11 +358,16 @@ export default function AdminPage() {
         // Then refresh rooms list
         fetchRooms();
       } else {
-        alert(result.error || 'Failed to set main image');
+        const errorMsg = result.details 
+          ? `${result.error}\n\n${result.details}`
+          : result.error || 'Failed to set main image';
+        console.error('Set main image error:', result);
+        alert(errorMsg);
       }
     } catch (error) {
       console.error('Error setting main image:', error);
-      alert('Failed to set main image');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to set main image: ${errorMessage}`);
     } finally {
       setUpdatingImage(null);
     }

@@ -42,10 +42,16 @@ export async function deleteImageFromBlob(url: string): Promise<void> {
 export async function listRoomImages(roomId: string): Promise<BlobImageInfo[]> {
   try {
     const prefix = `rooms/${roomId}/`;
-    const { blobs } = await list({ prefix });
+    const result = await list({ prefix });
     
-    const images: BlobImageInfo[] = blobs
+    if (!result || !result.blobs) {
+      console.warn(`No blobs found for room ${roomId} with prefix ${prefix}`);
+      return [];
+    }
+    
+    const images: BlobImageInfo[] = result.blobs
       .filter(blob => {
+        if (!blob.pathname) return false;
         const ext = blob.pathname.toLowerCase();
         return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp');
       })
@@ -61,9 +67,12 @@ export async function listRoomImages(roomId: string): Promise<BlobImageInfo[]> {
         };
       });
     
+    console.log(`Found ${images.length} images for room ${roomId}:`, images.map(img => img.filename));
     return images;
   } catch (error) {
     console.error('Error listing room images from blob:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error details:', errorMessage);
     return [];
   }
 }
