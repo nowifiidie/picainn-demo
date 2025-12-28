@@ -3,6 +3,17 @@ import { readdir, access, constants, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { roomOrder } from '@/lib/rooms';
+import { Redis } from '@upstash/redis';
+
+const ROOM_ORDER_KEY = 'room-order';
+
+// Initialize Redis client (will use environment variables automatically)
+const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  ? new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    })
+  : null;
 
 interface RoomImages {
   roomId: string;
@@ -53,10 +64,28 @@ export async function GET() {
       }
     }
 
-    // Get room order from lib/rooms.ts (or try to read from file as fallback)
-    let savedOrder: string[] = roomOrder || [];
+    // Get room order from Upstash Redis (production) or fallback to lib/rooms.ts
+    let savedOrder: string[] = [];
     
-    // Fallback: try reading from data file if roomOrder is empty (for backward compatibility)
+    if (redis) {
+      try {
+        // Try to get from Upstash Redis first
+        const redisOrder = await redis.get<string[]>(ROOM_ORDER_KEY);
+        if (Array.isArray(redisOrder) && redisOrder.length > 0) {
+          savedOrder = redisOrder;
+        }
+      } catch (redisError) {
+        // Redis not configured or not available, use fallback
+        console.log('Redis not available, using fallback');
+      }
+    }
+    
+    // Fallback: use roomOrder from lib/rooms.ts
+    if (savedOrder.length === 0) {
+      savedOrder = roomOrder || [];
+    }
+    
+    // Last resort: try reading from data file if roomOrder is empty (for backward compatibility)
     if (savedOrder.length === 0) {
       const orderFilePath = join(process.cwd(), 'data', 'room-order.json');
       if (existsSync(orderFilePath)) {

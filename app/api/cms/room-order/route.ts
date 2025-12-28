@@ -1,44 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile, writeFile } from 'fs/promises';
-import { join } from 'path';
+import { Redis } from '@upstash/redis';
 import { roomOrder } from '@/lib/rooms';
 
-const ROOMS_FILE_PATH = join(process.cwd(), 'lib', 'rooms.ts');
+const ROOM_ORDER_KEY = 'room-order';
+
+// Initialize Redis client (will use environment variables automatically)
+const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  ? new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    })
+  : null;
 
 // Get room order
 export async function GET() {
   try {
-    // Read from the rooms.ts file to get the current order
-    const fileContent = await readFile(ROOMS_FILE_PATH, 'utf-8');
-    
-    // Extract roomOrder array from the file
-    const orderMatch = fileContent.match(/export let roomOrder: string\[\] = (\[[\s\S]*?\]);/);
-    
-    if (orderMatch) {
+    // Try to get from Upstash Redis first (production)
+    if (redis) {
       try {
-        // Parse the array from the file - the match should contain valid JSON array syntax
-        const arrayString = orderMatch[1].trim();
-        // Use JSON.parse to safely parse the array
-        const order = JSON.parse(arrayString);
-        if (Array.isArray(order)) {
-          return NextResponse.json({ order });
+        const redisOrder = await redis.get<string[]>(ROOM_ORDER_KEY);
+        if (Array.isArray(redisOrder) && redisOrder.length > 0) {
+          return NextResponse.json({ order: redisOrder });
         }
-      } catch (error) {
-        console.error('Error parsing room order from file:', error);
-        // Fallback: try to extract manually if JSON.parse fails
-        try {
-          const arrayContent = orderMatch[1].trim();
-          // Extract quoted strings from the array
-          const stringMatches = arrayContent.match(/"([^"]+)"/g) || arrayContent.match(/'([^']+)'/g) || [];
-          const items = stringMatches.map(m => m.replace(/^["']|["']$/g, ''));
-          return NextResponse.json({ order: items });
-        } catch {
-          // If all parsing fails, return empty array
-        }
+      } catch (redisError) {
+        // Redis might not be configured, fall through to file-based approach
+        console.log('Redis not available, using fallback:', redisError instanceof Error ? redisError.message : 'Unknown error');
       }
     }
-    
-    // Fallback: return the imported value (might be stale)
+
+    // Fallback: return the imported value from lib/rooms.ts
     return NextResponse.json({ order: roomOrder || [] });
   } catch (error) {
     console.error('Error reading room order:', error);
@@ -67,66 +57,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Read the rooms.ts file
-    const fileContent = await readFile(ROOMS_FILE_PATH, 'utf-8');
-    
-    // Format the order array as a string
-    const orderString = JSON.stringify(order, null, 2)
-      .split('\n')
-      .map((line, index) => index === 0 ? line : '  ' + line)
-      .join('\n');
-    
-    // Replace the roomOrder declaration
-    const orderPattern = /export let roomOrder: string\[\] = (\[[\s\S]*?\]);/;
-    
-    let updatedContent: string;
-    if (orderPattern.test(fileContent)) {
-      // Replace existing order
-      updatedContent = fileContent.replace(
-        orderPattern,
-        `export let roomOrder: string[] = ${orderString};`
-      );
-    } else {
-      // Insert after cmsConfig if roomOrder doesn't exist
-      const cmsConfigPattern = /(export let cmsConfig: CMSConfig = \{[\s\S]*?\};)/;
-      updatedContent = fileContent.replace(
-        cmsConfigPattern,
-        `$1\n\n// Room order configuration - stores the display order of rooms\nexport let roomOrder: string[] = ${orderString};`
-      );
+    // Try to save to Upstash Redis first (production)
+    if (redis) {
+      try {
+        await redis.set(ROOM_ORDER_KEY, order);
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Room order updated successfully',
+          order 
+        });
+      } catch (redisError) {
+        // Redis might not be configured, fall through to file-based approach for local dev
+        console.log('Redis not available, trying file-based approach:', redisError instanceof Error ? redisError.message : 'Unknown error');
+      }
     }
+    
+    // For local development, try to update the file
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        const { readFile, writeFile } = await import('fs/promises');
+        const { join } = await import('path');
+        const ROOMS_FILE_PATH = join(process.cwd(), 'lib', 'rooms.ts');
+        const fileContent = await readFile(ROOMS_FILE_PATH, 'utf-8');
+        
+        // Format the order array as a string
+        const orderString = JSON.stringify(order, null, 2)
+          .split('\n')
+          .map((line, index) => index === 0 ? line : '  ' + line)
+          .join('\n');
+        
+        // Replace the roomOrder declaration
+        const orderPattern = /export let roomOrder: string\[\] = (\[[\s\S]*?\]);/;
+        
+        let updatedContent: string;
+        if (orderPattern.test(fileContent)) {
+          updatedContent = fileContent.replace(
+            orderPattern,
+            `export let roomOrder: string[] = ${orderString};`
+          );
+        } else {
+          const cmsConfigPattern = /(export let cmsConfig: CMSConfig = \{[\s\S]*?\};)/;
+          updatedContent = fileContent.replace(
+            cmsConfigPattern,
+            `$1\n\n// Room order configuration - stores the display order of rooms\nexport let roomOrder: string[] = ${orderString};`
+          );
+        }
 
-    // Write the updated file
-    try {
-      await writeFile(ROOMS_FILE_PATH, updatedContent, 'utf-8');
-    } catch (writeError) {
-      console.error('File write error:', writeError);
-      // In production (serverless), file writes might fail
-      // Return a more helpful error message
-      const errorMessage = writeError instanceof Error ? writeError.message : 'Unknown write error';
-      return NextResponse.json(
-        { 
-          error: 'Failed to write room order to file', 
-          details: errorMessage,
-          note: 'In production environments, file writes may be restricted. The order may not persist across deployments.'
-        },
-        { status: 500 }
-      );
+        await writeFile(ROOMS_FILE_PATH, updatedContent, 'utf-8');
+        
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Room order updated successfully (local file)',
+          order 
+        });
+      } catch (fileError) {
+        console.error('File write also failed:', fileError);
+      }
     }
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Room order updated successfully',
-      order 
-    });
+    
+    // If both Redis and file write fail, return error with instructions
+    return NextResponse.json(
+      { 
+        error: 'Failed to save room order', 
+        details: 'Upstash Redis is not configured. Please set up Upstash Redis for production use.',
+        instructions: 'To fix this: 1) Go to your Vercel dashboard, 2) Navigate to Storage, 3) Click "Browse Marketplace", 4) Select "Upstash Redis", 5) Create the database (environment variables will be added automatically), 6) Redeploy your application.'
+      },
+      { status: 500 }
+    );
   } catch (error) {
     console.error('Error updating room order:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
     return NextResponse.json(
       { 
         error: 'Failed to update room order', 
-        details: errorMessage,
-        ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
+        details: errorMessage
       },
       { status: 500 }
     );
