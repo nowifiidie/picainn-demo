@@ -804,10 +804,12 @@ export default function AdminPage() {
                                 updatingImage === image.filename || isLoadingImages ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                               }`}>
                                 <Upload className="w-3 h-3 mx-auto" />
+                                <span className="sr-only">Update {image.filename}</span>
                                 <input
                                   type="file"
                                   accept="image/*"
                                   className="hidden"
+                                  aria-label={`Update ${image.filename}`}
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file && !isLoadingImages) {

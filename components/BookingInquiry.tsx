@@ -148,11 +148,13 @@ export default function BookingInquiry() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-[#333333] mb-2">
+              <label htmlFor="fullName" className="block text-sm font-medium text-[#333333] mb-2">
                 Full Name
               </label>
               <input
                 type="text"
+                id="fullName"
+                name="fullName"
                 required
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -161,11 +163,13 @@ export default function BookingInquiry() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#333333] mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-[#333333] mb-2">
                 Email
               </label>
               <input
                 type="email"
+                id="email"
+                name="email"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -174,10 +178,12 @@ export default function BookingInquiry() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#333333] mb-2">
+              <label htmlFor="roomType" className="block text-sm font-medium text-[#333333] mb-2">
                 Select Room Type <span className="text-red-500">*</span>
               </label>
               <select
+                id="roomType"
+                name="roomType"
                 required
                 value={formData.roomType}
                 onChange={(e) => setFormData({ ...formData, roomType: e.target.value })}
@@ -193,10 +199,12 @@ export default function BookingInquiry() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#333333] mb-2">
+              <label htmlFor="guests" className="block text-sm font-medium text-[#333333] mb-2">
                 Number of Guests
               </label>
               <select
+                id="guests"
+                name="guests"
                 value={formData.guests}
                 onChange={(e) => setFormData({ ...formData, guests: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
@@ -210,10 +218,12 @@ export default function BookingInquiry() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#333333] mb-2">
+              <label htmlFor="contactApp" className="block text-sm font-medium text-[#333333] mb-2">
                 Preferred Contact App
               </label>
               <select
+                id="contactApp"
+                name="contactApp"
                 value={formData.contactApp}
                 onChange={(e) => setFormData({ ...formData, contactApp: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
@@ -243,6 +253,7 @@ export default function BookingInquiry() {
           <div className="bg-white rounded-sm p-8 max-w-md w-full relative">
             <button
               onClick={() => setShowThankYou(false)}
+              aria-label="Close thank you message"
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
               <X className="w-5 h-5" />

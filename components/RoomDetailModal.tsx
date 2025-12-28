@@ -61,6 +61,7 @@ export default function RoomDetailModal({ room, onClose }: RoomDetailModalProps)
         <div className="absolute top-4 right-4 z-20">
           <button
             onClick={onClose}
+            aria-label="Close room details"
             className="p-2 bg-white/90 rounded-full hover:bg-white transition-colors shadow-lg"
           >
             <X className="w-5 h-5 text-[#333333]" />
@@ -88,7 +89,7 @@ export default function RoomDetailModal({ room, onClose }: RoomDetailModalProps)
                   e.stopPropagation();
                   goToPrevious();
                 }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 hover:bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 min-w-[24px] min-h-[24px]"
                 aria-label="Previous image"
               >
                 <ChevronLeft className="w-5 h-5 text-[#333333]" />
@@ -98,7 +99,7 @@ export default function RoomDetailModal({ room, onClose }: RoomDetailModalProps)
                   e.stopPropagation();
                   goToNext();
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 hover:bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 min-w-[24px] min-h-[24px]"
                 aria-label="Next image"
               >
                 <ChevronRight className="w-5 h-5 text-[#333333]" />
@@ -113,10 +114,10 @@ export default function RoomDetailModal({ room, onClose }: RoomDetailModalProps)
                 <button
                   key={index}
                   onClick={() => setCurrentImageIndex(index)}
-                  className={`h-2 rounded-full transition-all ${
+                  className={`h-3 rounded-full transition-all min-w-[24px] ${
                     index === currentImageIndex
                       ? 'w-8 bg-white'
-                      : 'w-2 bg-white/50 hover:bg-white/75'
+                      : 'w-3 bg-white/50 hover:bg-white/75'
                   }`}
                   aria-label={`Go to image ${index + 1}`}
                 />
@@ -210,6 +211,7 @@ export default function RoomDetailModal({ room, onClose }: RoomDetailModalProps)
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                     className="w-full h-full"
+                    title={`Map showing location of ${room.name}`}
                   />
                 </div>
               )}
