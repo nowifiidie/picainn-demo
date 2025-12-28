@@ -15,13 +15,44 @@ export interface BlobImageInfo {
 export async function uploadImageToBlob(
   path: string,
   file: File | Buffer,
-  options?: { contentType?: string }
+  options?: { contentType?: string; allowOverwrite?: boolean }
 ): Promise<{ url: string }> {
-  const blob = await put(path, file, {
-    access: 'public',
-    contentType: options?.contentType,
-  });
-  return { url: blob.url };
+  // If we want to overwrite, delete the existing blob first
+  if (options?.allowOverwrite) {
+    try {
+      const { list, del } = await import('@vercel/blob');
+      const prefix = path.substring(0, path.lastIndexOf('/') + 1);
+      const { blobs } = await list({ prefix });
+      const existingBlob = blobs.find(b => b.pathname === path);
+      if (existingBlob) {
+        await del(existingBlob.url);
+        console.log(`Deleted existing blob: ${path}`);
+      }
+    } catch (deleteError) {
+      console.warn(`Could not delete existing blob ${path} (may not exist):`, deleteError);
+      // Continue with upload even if delete fails
+    }
+  }
+
+  try {
+    const blob = await put(path, file, {
+      access: 'public',
+      contentType: options?.contentType,
+    });
+    return { url: blob.url };
+  } catch (error: any) {
+    // If blob still exists (delete might have failed), try with addRandomSuffix
+    if (error?.message?.includes('already exists')) {
+      console.warn(`Blob ${path} still exists, trying with addRandomSuffix`);
+      const blob = await put(path, file, {
+        access: 'public',
+        contentType: options?.contentType,
+        addRandomSuffix: true,
+      });
+      return { url: blob.url };
+    }
+    throw error;
+  }
 }
 
 /**

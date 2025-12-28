@@ -114,15 +114,17 @@ export async function POST(request: NextRequest) {
     const sourceFile = new File([sourceBlob], 'main.jpg', { type: sourceBlob.type });
     const mainFile = new File([mainBlob], filename, { type: mainBlob.type });
 
-    // Upload swapped images
+    // Upload swapped images (allow overwrite since we're swapping existing images)
     let newMainResult, newSourceResult;
     try {
       [newMainResult, newSourceResult] = await Promise.all([
         uploadImageToBlob(`rooms/${roomId}/main.jpg`, sourceFile, {
           contentType: sourceBlob.type || 'image/jpeg',
+          allowOverwrite: true,
         }),
         uploadImageToBlob(`rooms/${roomId}/${cleanFilename}`, mainFile, {
           contentType: mainBlob.type || 'image/jpeg',
+          allowOverwrite: true,
         }),
       ]);
     } catch (uploadError) {
