@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { readdir, access, constants } from 'fs/promises';
-import { readFile } from 'fs/promises';
+import { readdir, access, constants, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { roomOrder } from '@/lib/rooms';
 
 interface RoomImages {
   roomId: string;
@@ -53,23 +53,27 @@ export async function GET() {
       }
     }
 
-    // Try to load saved room order
-    let roomOrder: string[] = [];
-    const orderFilePath = join(process.cwd(), 'data', 'room-order.json');
-    if (existsSync(orderFilePath)) {
-      try {
-        const orderContent = await readFile(orderFilePath, 'utf-8');
-        roomOrder = JSON.parse(orderContent);
-      } catch (error) {
-        console.error('Error reading room order:', error);
+    // Get room order from lib/rooms.ts (or try to read from file as fallback)
+    let savedOrder: string[] = roomOrder || [];
+    
+    // Fallback: try reading from data file if roomOrder is empty (for backward compatibility)
+    if (savedOrder.length === 0) {
+      const orderFilePath = join(process.cwd(), 'data', 'room-order.json');
+      if (existsSync(orderFilePath)) {
+        try {
+          const orderContent = await readFile(orderFilePath, 'utf-8');
+          savedOrder = JSON.parse(orderContent);
+        } catch (error) {
+          console.error('Error reading room order file:', error);
+        }
       }
     }
 
     // Sort rooms based on saved order, or fallback to numerical sort
-    if (roomOrder.length > 0) {
+    if (savedOrder.length > 0) {
       availableRooms.sort((a, b) => {
-        const orderA = roomOrder.indexOf(a.roomId);
-        const orderB = roomOrder.indexOf(b.roomId);
+        const orderA = savedOrder.indexOf(a.roomId);
+        const orderB = savedOrder.indexOf(b.roomId);
         
         // If both are in order, sort by order
         if (orderA !== -1 && orderB !== -1) {

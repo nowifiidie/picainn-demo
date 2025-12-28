@@ -23,6 +23,9 @@ export interface CMSConfig {
   roomsLastUpdated?: number;
 }
 
+// Room order configuration - stores the display order of rooms
+export let roomOrder: string[] = [];
+
 // CMS Configuration with timestamps for cache busting
 export let cmsConfig: CMSConfig = {
   heroLastUpdated: 1766900599519,
