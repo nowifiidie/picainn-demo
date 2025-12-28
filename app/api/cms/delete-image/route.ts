@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { rm, access, constants } from 'fs/promises';
+import { rm, rename, access, constants } from 'fs/promises';
 import { join } from 'path';
 import { revalidatePath } from 'next/cache';
+import { Redis } from '@upstash/redis';
+
+const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  ? new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    })
+  : null;
 
 export const maxDuration = 30;
 
@@ -42,39 +50,96 @@ export async function DELETE(request: NextRequest) {
     }
 
     const imagePath = join(process.cwd(), 'public', 'images', 'rooms', roomId, filename);
+    const deletedPath = join(process.cwd(), 'public', 'images', 'rooms', roomId, `_deleted_${filename}`);
 
     try {
+      let fileToDelete = imagePath;
+      let targetPath = deletedPath;
+      
       // Check if file exists first
       try {
         await access(imagePath, constants.F_OK);
       } catch (accessError) {
-        // File doesn't exist - might have already been deleted
+        // File doesn't exist - might be hidden or already deleted
         // Check if it exists with _hidden_ prefix
         const hiddenPath = join(process.cwd(), 'public', 'images', 'rooms', roomId, `_hidden_${filename}`);
         try {
           await access(hiddenPath, constants.F_OK);
-          // Hidden version exists, delete that instead
-          await rm(hiddenPath);
+          // Hidden version exists, mark it as deleted
+          fileToDelete = hiddenPath;
+          targetPath = join(process.cwd(), 'public', 'images', 'rooms', roomId, `_deleted_${filename}`);
+        } catch {
+          // Check if already marked as deleted
+          try {
+            await access(deletedPath, constants.F_OK);
+            return NextResponse.json({
+              success: true,
+              message: 'Image already deleted',
+            });
+          } catch {
+            return NextResponse.json(
+              { success: false, error: 'Image not found. It may have already been deleted.' },
+              { status: 404 }
+            );
+          }
+        }
+      }
+
+      // Try to delete/rename the file
+      try {
+        // First, try to rename (mark as deleted) - works in local dev
+        try {
+          await rename(fileToDelete, targetPath);
           revalidatePath('/');
           return NextResponse.json({
             success: true,
             message: 'Image deleted successfully',
           });
-        } catch {
-          return NextResponse.json(
-            { success: false, error: 'Image not found. It may have already been deleted.' },
-            { status: 404 }
-          );
+        } catch (renameError: any) {
+          // If rename fails, try actual delete (for local dev)
+          if (renameError.code !== 'EROFS' && renameError.code !== 'EACCES' && renameError.code !== 'EPERM') {
+            await rm(fileToDelete);
+            revalidatePath('/');
+            return NextResponse.json({
+              success: true,
+              message: 'Image deleted successfully',
+            });
+          }
+          // If both fail due to read-only file system, track deletion in Redis
+          throw renameError;
         }
+      } catch (fileError: any) {
+        // File system is read-only (production/serverless)
+        if (fileError.code === 'EROFS' || fileError.code === 'EACCES' || fileError.code === 'EPERM') {
+          // Track deleted files in Redis
+          if (redis) {
+            const deletedKey = `deleted-images:${roomId}`;
+            const deletedFiles = await redis.get<string[]>(deletedKey) || [];
+            if (!deletedFiles.includes(filename)) {
+              deletedFiles.push(filename);
+              await redis.set(deletedKey, deletedFiles);
+            }
+            revalidatePath('/');
+            return NextResponse.json({
+              success: true,
+              message: 'Image deleted successfully',
+              note: 'File system is read-only. Deletion tracked in database.'
+            });
+          } else {
+            // Redis not available - return error with helpful message
+            return NextResponse.json(
+              {
+                success: false,
+                error: 'Cannot delete image in production environment',
+                details: 'File system is read-only and Redis is not configured. Please set up Upstash Redis to track deleted files, or delete images manually from your repository.',
+                code: fileError.code
+              },
+              { status: 403 }
+            );
+          }
+        }
+        throw fileError;
       }
-
-      // File exists, try to delete it
-      await rm(imagePath);
-      revalidatePath('/');
-      return NextResponse.json({
-        success: true,
-        message: 'Image deleted successfully',
-      });
     } catch (error) {
       console.error('Error deleting image:', error);
       console.error('Room ID:', roomId);
