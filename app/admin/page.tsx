@@ -431,62 +431,87 @@ export default function AdminPage() {
       const deletedRooms = await fetchDeletedRooms();
       const deletedRoomsSet = new Set(deletedRooms);
 
-      // Fetch rooms with images from API (with cache busting)
-      // The API already filters deleted rooms
+      // Fetch rooms with images and metadata from API (with cache busting)
+      // The API already filters deleted rooms and includes metadata from both Redis and static file
       const response = await fetch(`/api/rooms?t=${Date.now()}`, {
         cache: 'no-store',
       });
-      const roomsWithImages: { roomId: string; mainImage: string }[] = response.ok 
+      const roomsData: { 
+        roomId: string; 
+        mainImage: string; 
+        additionalImages: string[];
+        metadata?: {
+          name: string;
+          type: string;
+          description: string;
+          amenities: string[];
+          bedInfo: string;
+          maxGuests: number;
+          size: string;
+          address: string;
+          mapUrl: string;
+          altText?: {
+            en?: string;
+            ja?: string;
+            ko?: string;
+            zh?: string;
+          };
+          lastUpdated?: number;
+        };
+      }[] = response.ok 
         ? (await response.json()).rooms 
         : [];
 
-      // Get ALL rooms from metadata (including ones without images)
+      // Get static metadata for rooms that don't have metadata in API response (fallback)
       const allMetadata = getAllRoomMetadata();
-      
-      // Get list of room IDs that exist (have images) - these are definitely not deleted
-      const roomIdsFromAPI = new Set(roomsWithImages.map(r => r.roomId));
-
-      // Create a map of rooms with images
-      const imageMap = new Map(
-        roomsWithImages.map(room => [room.roomId, room.mainImage])
+      const metadataMap = new Map(
+        allMetadata.map(m => [m.id, m])
       );
 
-      // Merge all metadata with image info
-      // Filter out deleted rooms - only include rooms that are:
-      // 1. In the API response (have images and not deleted), OR
-      // 2. In metadata but not in deletedRooms list (no images but not deleted)
-      console.log('Deleted rooms set:', Array.from(deletedRoomsSet));
-      console.log('All metadata count:', allMetadata.length);
-      console.log('Rooms with images:', roomsWithImages.map(r => r.roomId));
-      
-      const mergedRooms: RoomDisplay[] = allMetadata
-        .filter(metadata => {
-          // Exclude if explicitly deleted (check both exact match and case-insensitive)
-          const isDeleted = deletedRoomsSet.has(metadata.id) || 
+      // Create merged rooms from API response
+      const mergedRooms: RoomDisplay[] = roomsData
+        .filter(room => {
+          // Exclude if explicitly deleted
+          const isDeleted = deletedRoomsSet.has(room.roomId) || 
                            Array.from(deletedRoomsSet).some(deletedId => 
-                             deletedId.toLowerCase() === metadata.id.toLowerCase()
+                             deletedId.toLowerCase() === room.roomId.toLowerCase()
                            );
           
           if (isDeleted) {
-            console.log(`Filtering out deleted room: ${metadata.id}`);
+            console.log(`Filtering out deleted room: ${room.roomId}`);
             return false;
           }
-          
-          // Include if it has images (in API response) or if it doesn't have images but isn't deleted
           return true;
         })
-        .map((metadata) => {
-          const hasImage = imageMap.has(metadata.id);
+        .map(room => {
+          // Use metadata from API if available (Blob Storage rooms), otherwise use static metadata
+          const metadata = room.metadata || metadataMap.get(room.roomId);
+          
+          if (!metadata) {
+            console.warn(`No metadata found for ${room.roomId}`);
+            // Return basic info if no metadata
+            return {
+              roomId: room.roomId,
+              name: room.roomId,
+              type: 'Unknown',
+              description: '',
+              image: room.mainImage,
+              maxGuests: 2,
+              size: '0 m²',
+              hasImage: true,
+            };
+          }
+
           return {
-            roomId: metadata.id,
+            roomId: room.roomId,
             name: metadata.name,
             type: metadata.type,
             description: metadata.description,
-            image: hasImage ? imageMap.get(metadata.id)! : '/images/placeholder-room.jpg', // Fallback or placeholder
+            image: room.mainImage,
             maxGuests: metadata.maxGuests,
             size: metadata.size,
             altText: metadata.altText,
-            hasImage, // Add flag to indicate if image exists
+            hasImage: true,
           };
         });
 
