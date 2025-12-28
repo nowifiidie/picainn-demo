@@ -29,10 +29,27 @@ export async function GET() {
     // Read all directories in the rooms folder
     const entries = await readdir(roomsDir, { withFileTypes: true });
 
+    // Get list of deleted rooms from Redis (for production where file system is read-only)
+    let deletedRooms: string[] = [];
+    if (redis) {
+      try {
+        const deletedRoomsKey = 'deleted-rooms';
+        deletedRooms = await redis.get<string[]>(deletedRoomsKey) || [];
+      } catch (error) {
+        console.error('Error fetching deleted rooms from Redis:', error);
+      }
+    }
+
     // Check each directory to see if it's a room folder with a main.jpg
     for (const entry of entries) {
       if (entry.isDirectory() && entry.name.startsWith('room')) {
         const roomId = entry.name;
+        
+        // Skip if room is marked as deleted in Redis
+        if (deletedRooms.includes(roomId)) {
+          continue;
+        }
+        
         const mainImagePath = join(roomsDir, roomId, 'main.jpg');
 
         try {

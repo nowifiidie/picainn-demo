@@ -155,6 +155,45 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDeleteRoom(roomId: string, roomName: string) {
+    if (!confirm(`Are you sure you want to delete "${roomName}" (${roomId})?\n\nThis will delete the entire room including all images.\n\nThis action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/cms/delete-room?roomId=${encodeURIComponent(roomId)}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      
+      console.log('Delete room response:', result);
+      
+      if (result.success) {
+        // Close edit modal if it's open for this room
+        if (editingRoom && editingRoom.roomId === roomId) {
+          setEditingRoom(null);
+          setEditStatus(null);
+        }
+        // Refresh rooms list
+        await fetchRooms();
+        alert(result.message || 'Room deleted successfully');
+      } else {
+        const errorMsg = result.details 
+          ? `${result.error}\n\n${result.details}`
+          : result.error || 'Failed to delete room';
+        if (result.note) {
+          alert(`${errorMsg}\n\n${result.note}`);
+        } else {
+          alert(errorMsg);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to delete room: ${errorMessage}\n\nCheck the browser console for more details.`);
+    }
+  }
+
   async function handleDeleteImage(roomId: string, filename: string) {
     // Get the current image to show in confirmation
     const imageToDelete = roomImages.find(img => img.filename === filename);
@@ -312,6 +351,18 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchDeletedRooms(): Promise<string[]> {
+    try {
+      // Try to get deleted rooms from Redis via a simple API call
+      // For now, we'll rely on the /api/rooms endpoint to filter them
+      // But we can add a dedicated endpoint if needed
+      return [];
+    } catch (error) {
+      console.error('Error fetching deleted rooms:', error);
+      return [];
+    }
+  }
+
   async function fetchRooms() {
     setIsLoadingRooms(true);
     try {
@@ -319,6 +370,7 @@ export default function AdminPage() {
       const order = await fetchRoomOrder();
 
       // Fetch rooms with images from API (with cache busting)
+      // The API already filters deleted rooms
       const response = await fetch(`/api/rooms?t=${Date.now()}`, {
         cache: 'no-store',
       });
@@ -328,6 +380,9 @@ export default function AdminPage() {
 
       // Get ALL rooms from metadata (including ones without images)
       const allMetadata = getAllRoomMetadata();
+      
+      // Get list of room IDs that exist (have images) - these are definitely not deleted
+      const roomIdsFromAPI = new Set(roomsWithImages.map(r => r.roomId));
 
       // Create a map of rooms with images
       const imageMap = new Map(
@@ -335,6 +390,7 @@ export default function AdminPage() {
       );
 
       // Merge all metadata with image info
+      // Note: The API already filters deleted rooms, so roomsWithImages only contains non-deleted rooms
       const mergedRooms: RoomDisplay[] = allMetadata.map((metadata) => {
         const hasImage = imageMap.has(metadata.id);
         return {
@@ -603,12 +659,21 @@ export default function AdminPage() {
                         <div className="text-xs text-gray-600">No alt text</div>
                       )}
                     </div>
-                    <button
-                      onClick={() => handleEditClick(room)}
-                      className="mt-auto w-full px-4 py-2 bg-[#333333] text-white rounded-sm text-sm font-medium hover:bg-gray-800 transition-colors"
-                    >
-                      Edit Room
-                    </button>
+                    <div className="mt-auto flex gap-2">
+                      <button
+                        onClick={() => handleEditClick(room)}
+                        className="flex-1 px-4 py-2 bg-[#333333] text-white rounded-sm text-sm font-medium hover:bg-gray-800 transition-colors"
+                      >
+                        Edit Room
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRoom(room.roomId, room.name)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-sm text-sm font-medium hover:bg-red-700 transition-colors"
+                        title={`Delete ${room.name}`}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1012,6 +1077,17 @@ export default function AdminPage() {
                     className="flex-1 px-6 py-2 bg-[#333333] text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isEditing ? 'Updating...' : 'Update Room'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingRoom) {
+                        handleDeleteRoom(editingRoom.roomId, editingRoom.name);
+                      }
+                    }}
+                    className="px-6 py-2 bg-red-600 text-white rounded-sm font-medium hover:bg-red-700 transition-colors"
+                  >
+                    Delete Room
                   </button>
                   <button
                     type="button"
