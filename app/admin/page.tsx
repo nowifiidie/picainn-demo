@@ -156,7 +156,41 @@ export default function AdminPage() {
 
   async function handleEditClick(room: RoomDisplay) {
     // Get full room metadata including all fields
-    const fullMetadata = getRoomMetadata(room.roomId);
+    // Try to get from API first (includes Blob Storage rooms), then fall back to static metadata
+    let fullMetadata = getRoomMetadata(room.roomId);
+    
+    // If not found in static metadata, try fetching from API (which includes Redis/Blob Storage rooms)
+    if (!fullMetadata) {
+      try {
+        const response = await fetch(`/api/rooms?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const roomFromAPI = data.rooms.find((r: any) => r.roomId === room.roomId);
+          if (roomFromAPI?.metadata) {
+            // Convert API metadata format to RoomMetadata format
+            fullMetadata = {
+              id: room.roomId,
+              name: roomFromAPI.metadata.name,
+              type: roomFromAPI.metadata.type,
+              description: roomFromAPI.metadata.description,
+              amenities: roomFromAPI.metadata.amenities,
+              bedInfo: roomFromAPI.metadata.bedInfo,
+              maxGuests: roomFromAPI.metadata.maxGuests,
+              size: roomFromAPI.metadata.size,
+              address: roomFromAPI.metadata.address,
+              mapUrl: roomFromAPI.metadata.mapUrl,
+              altText: roomFromAPI.metadata.altText,
+              lastUpdated: roomFromAPI.metadata.lastUpdated,
+            };
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching room metadata from API:', error);
+      }
+    }
+    
     if (fullMetadata) {
       setEditingRoom({
         ...room,
