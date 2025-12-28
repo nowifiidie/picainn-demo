@@ -9,13 +9,20 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const roomId = searchParams.get('roomId');
-    const filename = searchParams.get('filename');
+    let filename = searchParams.get('filename');
 
     if (!roomId || !filename) {
       return NextResponse.json(
         { success: false, error: 'Room ID and filename are required' },
         { status: 400 }
       );
+    }
+
+    // Decode URL-encoded filename
+    try {
+      filename = decodeURIComponent(filename);
+    } catch {
+      // If decoding fails, use original filename
     }
 
     // Validate filename to prevent directory traversal
@@ -70,8 +77,17 @@ export async function DELETE(request: NextRequest) {
       });
     } catch (error) {
       console.error('Error deleting image:', error);
+      console.error('Room ID:', roomId);
+      console.error('Filename:', filename);
+      console.error('Image Path:', imagePath);
+      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorCode = (error as any)?.code;
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      
+      // Log full error details for debugging
+      console.error('Error code:', errorCode);
+      console.error('Error stack:', errorStack);
       
       // Provide more specific error messages
       if (errorCode === 'EACCES' || errorCode === 'EPERM') {
@@ -79,7 +95,8 @@ export async function DELETE(request: NextRequest) {
           { 
             success: false, 
             error: 'Permission denied. File system may be read-only in this environment.',
-            details: 'In production (serverless) environments, file deletion may be restricted.'
+            details: 'In production (serverless) environments, file deletion may be restricted. Files are typically read-only in serverless deployments.',
+            code: errorCode
           },
           { status: 403 }
         );
@@ -87,16 +104,21 @@ export async function DELETE(request: NextRequest) {
       
       if (errorCode === 'ENOENT') {
         return NextResponse.json(
-          { success: false, error: 'Image not found. It may have already been deleted.' },
+          { success: false, error: 'Image not found. It may have already been deleted.', code: errorCode },
           { status: 404 }
         );
       }
 
+      // Return detailed error in both dev and production for debugging
       return NextResponse.json(
         { 
           success: false, 
           error: 'Failed to delete image',
-          details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+          details: errorMessage,
+          code: errorCode,
+          path: imagePath,
+          roomId,
+          filename
         },
         { status: 500 }
       );

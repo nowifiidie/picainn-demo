@@ -174,21 +174,29 @@ export default function AdminPage() {
         method: 'DELETE',
       });
       const result = await response.json();
+      
+      console.log('Delete image response:', result);
+      
       if (result.success) {
         // Wait a bit for file system to sync, then refresh
         await new Promise(resolve => setTimeout(resolve, 300));
         await fetchRoomImages(roomId);
       } else {
         // Show detailed error message if available
-        const errorMsg = result.details 
-          ? `${result.error}\n\n${result.details}`
-          : result.error || 'Failed to delete image';
+        let errorMsg = result.error || 'Failed to delete image';
+        if (result.details) {
+          errorMsg += `\n\n${result.details}`;
+        }
+        if (result.code) {
+          errorMsg += `\n\nError code: ${result.code}`;
+        }
+        console.error('Delete image error:', result);
         alert(errorMsg);
       }
     } catch (error) {
       console.error('Error deleting image:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to delete image: ${errorMessage}`);
+      alert(`Failed to delete image: ${errorMessage}\n\nCheck the browser console for more details.`);
     } finally {
       setUpdatingImage(null);
     }
