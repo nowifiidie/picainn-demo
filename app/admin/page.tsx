@@ -33,7 +33,7 @@ interface RoomDisplay {
 
 export default function AdminPage() {
   const [heroStatus, setHeroStatus] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
-  const [roomStatus, setRoomStatus] = useState<{ success: boolean; message?: string; error?: string } | null>(null);
+  const [roomStatus, setRoomStatus] = useState<{ success: boolean; message?: string; error?: string; details?: string; note?: string } | null>(null);
   const [isHeroUploading, setIsHeroUploading] = useState(false);
   const [isRoomUploading, setIsRoomUploading] = useState(false);
   const [rooms, setRooms] = useState<RoomDisplay[]>([]);
@@ -95,10 +95,8 @@ export default function AdminPage() {
         await fetchRooms();
       } else {
         // Show detailed error if available
-        const errorMsg = result.details 
-          ? `${result.error}\n\n${result.details}`
-          : result.error || 'Failed to add room';
         console.error('Add room error:', result);
+        // The error will be displayed via roomStatus state
       }
     } catch (error) {
       console.error('Error adding room:', error);
@@ -1432,7 +1430,19 @@ export default function AdminPage() {
                     : 'bg-red-50 text-red-800 border border-red-200'
                 }`}
               >
-                {roomStatus.success ? roomStatus.message : roomStatus.error}
+                {roomStatus.success ? (
+                  roomStatus.message
+                ) : (
+                  <div>
+                    <div className="font-medium">{roomStatus.error}</div>
+                    {(roomStatus as any).details && (
+                      <div className="mt-2 text-sm opacity-90">{(roomStatus as any).details}</div>
+                    )}
+                    {(roomStatus as any).note && (
+                      <div className="mt-2 text-sm opacity-90 italic">{(roomStatus as any).note}</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </form>

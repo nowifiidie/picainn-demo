@@ -60,24 +60,66 @@ export async function POST(request: NextRequest) {
 
     // Create room directory
     const roomDir = join(roomsDir, roomId);
-    await mkdir(roomDir, { recursive: true });
+    try {
+      await mkdir(roomDir, { recursive: true });
+    } catch (mkdirError: any) {
+      console.error('Error creating room directory:', mkdirError);
+      if (mkdirError.code === 'EROFS' || mkdirError.code === 'EACCES' || mkdirError.code === 'EPERM') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Cannot create room directory in production environment',
+            details: 'File system is read-only. Room creation requires write access to the file system.',
+            code: mkdirError.code
+          },
+          { status: 403 }
+        );
+      }
+      throw mkdirError;
+    }
 
     // Save images: first as main.jpg, rest as image-1.jpg, image-2.jpg, etc.
-    for (let i = 0; i < images.length; i++) {
-      const image = images[i];
-      const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      
-      let imagePath: string;
-      if (i === 0) {
-        // First image is main.jpg
-        imagePath = join(roomDir, 'main.jpg');
-      } else {
-        // Additional images are image-1.jpg, image-2.jpg, etc.
-        imagePath = join(roomDir, `image-${i}.jpg`);
+    const savedImages: string[] = [];
+    try {
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        const bytes = await image.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        
+        let imagePath: string;
+        if (i === 0) {
+          // First image is main.jpg
+          imagePath = join(roomDir, 'main.jpg');
+        } else {
+          // Additional images are image-1.jpg, image-2.jpg, etc.
+          imagePath = join(roomDir, `image-${i}.jpg`);
+        }
+        
+        try {
+          await writeFile(imagePath, buffer);
+          savedImages.push(imagePath);
+        } catch (writeError: any) {
+          console.error(`Error saving image ${i}:`, writeError);
+          if (writeError.code === 'EROFS' || writeError.code === 'EACCES' || writeError.code === 'EPERM') {
+            // Clean up any images that were saved before the error
+            // (In production, we can't delete, but at least report what happened)
+            return NextResponse.json(
+              {
+                success: false,
+                error: 'Cannot save images in production environment',
+                details: `File system is read-only. ${savedImages.length > 0 ? `${savedImages.length} image(s) were saved before the error.` : 'No images could be saved.'}`,
+                code: writeError.code,
+                savedImages: savedImages.length
+              },
+              { status: 403 }
+            );
+          }
+          throw writeError;
+        }
       }
-      
-      await writeFile(imagePath, buffer);
+    } catch (imageError) {
+      console.error('Error processing images:', imageError);
+      throw imageError;
     }
 
     // Read current rooms.ts file
