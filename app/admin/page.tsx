@@ -169,6 +169,13 @@ export default function AdminPage() {
       console.log('Delete room response:', result);
       
       if (result.success) {
+        // Remove from room order if it exists
+        const currentOrder = [...roomOrder];
+        const updatedOrder = currentOrder.filter(id => id !== roomId);
+        if (updatedOrder.length !== currentOrder.length) {
+          await saveRoomOrder(updatedOrder);
+        }
+        
         // Close edit modal if it's open for this room
         if (editingRoom && editingRoom.roomId === roomId) {
           setEditingRoom(null);
@@ -353,14 +360,15 @@ export default function AdminPage() {
 
   async function fetchDeletedRooms(): Promise<string[]> {
     try {
-      // Try to get deleted rooms from Redis via a simple API call
-      // For now, we'll rely on the /api/rooms endpoint to filter them
-      // But we can add a dedicated endpoint if needed
-      return [];
+      const response = await fetch('/api/cms/deleted-rooms');
+      if (response.ok) {
+        const data = await response.json();
+        return data.deletedRooms || [];
+      }
     } catch (error) {
       console.error('Error fetching deleted rooms:', error);
-      return [];
     }
+    return [];
   }
 
   async function fetchRooms() {
@@ -368,6 +376,10 @@ export default function AdminPage() {
     try {
       // Fetch room order first
       const order = await fetchRoomOrder();
+
+      // Fetch deleted rooms list
+      const deletedRooms = await fetchDeletedRooms();
+      const deletedRoomsSet = new Set(deletedRooms);
 
       // Fetch rooms with images from API (with cache busting)
       // The API already filters deleted rooms
@@ -390,21 +402,32 @@ export default function AdminPage() {
       );
 
       // Merge all metadata with image info
-      // Note: The API already filters deleted rooms, so roomsWithImages only contains non-deleted rooms
-      const mergedRooms: RoomDisplay[] = allMetadata.map((metadata) => {
-        const hasImage = imageMap.has(metadata.id);
-        return {
-          roomId: metadata.id,
-          name: metadata.name,
-          type: metadata.type,
-          description: metadata.description,
-          image: hasImage ? imageMap.get(metadata.id)! : '/images/placeholder-room.jpg', // Fallback or placeholder
-          maxGuests: metadata.maxGuests,
-          size: metadata.size,
-          altText: metadata.altText,
-          hasImage, // Add flag to indicate if image exists
-        };
-      });
+      // Filter out deleted rooms - only include rooms that are:
+      // 1. In the API response (have images and not deleted), OR
+      // 2. In metadata but not in deletedRooms list (no images but not deleted)
+      const mergedRooms: RoomDisplay[] = allMetadata
+        .filter(metadata => {
+          // Exclude if explicitly deleted
+          if (deletedRoomsSet.has(metadata.id)) {
+            return false;
+          }
+          // Include if it has images (in API response) or if it doesn't have images but isn't deleted
+          return true;
+        })
+        .map((metadata) => {
+          const hasImage = imageMap.has(metadata.id);
+          return {
+            roomId: metadata.id,
+            name: metadata.name,
+            type: metadata.type,
+            description: metadata.description,
+            image: hasImage ? imageMap.get(metadata.id)! : '/images/placeholder-room.jpg', // Fallback or placeholder
+            maxGuests: metadata.maxGuests,
+            size: metadata.size,
+            altText: metadata.altText,
+            hasImage, // Add flag to indicate if image exists
+          };
+        });
 
       // Sort rooms based on saved order
       const sortedRooms = [...mergedRooms].sort((a, b) => {
