@@ -82,9 +82,23 @@ export default function AdminPage() {
         method: 'POST',
         body: formData,
       });
-      const result = await response.json();
+      
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('Error parsing response:', jsonError);
+        const text = await response.text();
+        console.error('Response text:', text);
+        result = {
+          success: false,
+          error: 'Failed to add room',
+          details: `Server error (${response.status}): ${text.substring(0, 200)}`
+        };
+      }
 
       console.log('Add room response:', result);
+      console.log('Response status:', response.status);
 
       setRoomStatus(result);
       setIsRoomUploading(false);
@@ -103,7 +117,8 @@ export default function AdminPage() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setRoomStatus({
         success: false,
-        error: `Failed to add room: ${errorMessage}`
+        error: `Failed to add room: ${errorMessage}`,
+        details: error instanceof Error ? error.stack : undefined
       });
       setIsRoomUploading(false);
     }

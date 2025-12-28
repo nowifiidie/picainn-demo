@@ -124,7 +124,21 @@ export async function POST(request: NextRequest) {
 
     // Read current rooms.ts file
     const roomsFilePath = join(process.cwd(), 'lib', 'rooms.ts');
-    const roomsFileContent = await readFile(roomsFilePath, 'utf-8');
+    let roomsFileContent: string;
+    try {
+      roomsFileContent = await readFile(roomsFilePath, 'utf-8');
+    } catch (readError: any) {
+      console.error('Error reading rooms.ts file:', readError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to read room metadata file',
+          details: readError.message || 'Could not read lib/rooms.ts file',
+          code: readError.code
+        },
+        { status: 500 }
+      );
+    }
 
     // Find the insertion point - after the last room entry (room5)
     const room5Match = roomsFileContent.match(/(room5:\s*\{[\s\S]*?\},?\s*)/);
@@ -215,7 +229,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Update CMS config timestamp
-    await updateCMSConfig('rooms');
+    try {
+      await updateCMSConfig('rooms');
+    } catch (configError) {
+      console.error('Error updating CMS config (non-fatal):', configError);
+      // Don't fail the whole operation if config update fails
+    }
 
     // Revalidate the home page
     revalidatePath('/');
@@ -229,15 +248,34 @@ export async function POST(request: NextRequest) {
     console.error('Error adding room:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
+    const errorCode = (error as any)?.code;
+    
     console.error('Error details:', errorMessage);
+    console.error('Error code:', errorCode);
     if (errorStack) {
       console.error('Error stack:', errorStack);
     }
+    
+    // Check if it's a file system error
+    if (errorCode === 'EROFS' || errorCode === 'EACCES' || errorCode === 'EPERM') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Cannot add room in production environment',
+          details: 'File system is read-only. Room creation requires write access to the file system.',
+          code: errorCode
+        },
+        { status: 403 }
+      );
+    }
+    
     return NextResponse.json(
       { 
         success: false, 
         error: 'Failed to add room',
-        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+        details: errorMessage,
+        code: errorCode,
+        ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
       },
       { status: 500 }
     );
