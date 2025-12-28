@@ -438,7 +438,7 @@ export default function AdminPage() {
       )}
 
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <main className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
           <h1 className="text-3xl font-light text-gray-900 mb-2">CMS Admin Panel</h1>
           <p className="text-gray-600">Manage your landing page content</p>
@@ -496,7 +496,7 @@ export default function AdminPage() {
               Refresh
             </button>
           </div>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-gray-500 mb-6 min-h-[1.5rem]">
             💡 Drag and drop room cards to reorder them. The order will be reflected on the home page.
           </p>
           {isLoadingRooms ? (
@@ -537,7 +537,7 @@ export default function AdminPage() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                        <div className="text-center text-gray-400">
+                        <div className="text-center text-gray-600">
                           <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
@@ -555,7 +555,7 @@ export default function AdminPage() {
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <GripVertical className="w-4 h-4 text-gray-500 flex-shrink-0" />
                           <h3 className="font-medium text-gray-900 text-lg truncate">{room.name}</h3>
                         </div>
                         <p className="text-sm text-gray-600 truncate ml-6">{room.type}</p>
@@ -581,7 +581,7 @@ export default function AdminPage() {
                           </div>
                         </>
                       ) : (
-                        <div className="text-xs text-gray-400">No alt text</div>
+                        <div className="text-xs text-gray-600">No alt text</div>
                       )}
                     </div>
                     <button
@@ -1277,7 +1277,7 @@ export default function AdminPage() {
             )}
           </form>
         </section>
-      </div>
+      </main>
     </div>
     </>
   );
