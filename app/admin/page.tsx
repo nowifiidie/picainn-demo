@@ -23,6 +23,10 @@ interface RoomDisplay {
   maxGuests: number;
   size: string;
   hasImage?: boolean; // Flag to indicate if image exists
+  bedInfo?: string;
+  address?: string;
+  mapUrl?: string;
+  amenities?: string[];
   altText?: {
     en?: string;
     ja?: string;
@@ -194,10 +198,15 @@ export default function AdminPage() {
     if (fullMetadata) {
       setEditingRoom({
         ...room,
-        // Add missing fields from metadata
-        type: fullMetadata.type,
-        maxGuests: fullMetadata.maxGuests,
-        size: fullMetadata.size,
+        // Add ALL fields from metadata to ensure form is fully populated
+        type: fullMetadata.type || room.type,
+        maxGuests: fullMetadata.maxGuests || room.maxGuests,
+        size: fullMetadata.size || room.size,
+        bedInfo: fullMetadata.bedInfo,
+        address: fullMetadata.address,
+        mapUrl: fullMetadata.mapUrl,
+        amenities: fullMetadata.amenities,
+        altText: fullMetadata.altText || room.altText,
       });
     } else {
       setEditingRoom(room);
@@ -544,6 +553,10 @@ export default function AdminPage() {
             image: room.mainImage,
             maxGuests: metadata.maxGuests,
             size: metadata.size,
+            bedInfo: metadata.bedInfo,
+            address: metadata.address,
+            mapUrl: metadata.mapUrl,
+            amenities: metadata.amenities,
             altText: metadata.altText,
             hasImage: true,
           };
@@ -868,7 +881,7 @@ export default function AdminPage() {
                       type="text"
                       id="edit-type"
                       name="type"
-                      defaultValue={getRoomMetadata(editingRoom.roomId)?.type || ''}
+                      defaultValue={editingRoom.type || ''}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
                     />
@@ -939,7 +952,7 @@ export default function AdminPage() {
                       type="text"
                       id="edit-bedInfo"
                       name="bedInfo"
-                      defaultValue={getRoomMetadata(editingRoom.roomId)?.bedInfo || ''}
+                      defaultValue={editingRoom.bedInfo || ''}
                       required
                       placeholder="e.g., 1 double bed (140 cm x 200 cm)"
                       className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
@@ -954,7 +967,7 @@ export default function AdminPage() {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {PRESET_AMENITIES.map((amenity) => {
                       const Icon = amenity.icon;
-                      const currentAmenities = getRoomMetadata(editingRoom.roomId)?.amenities || [];
+                      const currentAmenities = editingRoom.amenities || [];
                       const isChecked = currentAmenities.includes(amenity.name);
                       return (
                         <label
@@ -988,7 +1001,7 @@ export default function AdminPage() {
                     type="text"
                     id="edit-address"
                     name="address"
-                    defaultValue={getRoomMetadata(editingRoom.roomId)?.address || ''}
+                    defaultValue={editingRoom.address || ''}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
                   />
@@ -1002,7 +1015,7 @@ export default function AdminPage() {
                     type="url"
                     id="edit-mapUrl"
                     name="mapUrl"
-                    defaultValue={getRoomMetadata(editingRoom.roomId)?.mapUrl || ''}
+                    defaultValue={editingRoom.mapUrl || ''}
                     required
                     placeholder="https://www.google.com/maps/embed?pb=..."
                     className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
