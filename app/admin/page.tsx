@@ -181,8 +181,16 @@ export default function AdminPage() {
           setEditingRoom(null);
           setEditStatus(null);
         }
-        // Refresh rooms list
+        
+        // Immediately remove from local state for instant UI update
+        setRooms(prevRooms => prevRooms.filter(room => room.roomId !== roomId));
+        
+        // Wait a bit for Redis to sync (especially important in production)
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Refresh rooms list with cache busting to ensure consistency
         await fetchRooms();
+        
         alert(result.message || 'Room deleted successfully');
       } else {
         const errorMsg = result.details 
@@ -360,10 +368,15 @@ export default function AdminPage() {
 
   async function fetchDeletedRooms(): Promise<string[]> {
     try {
-      const response = await fetch('/api/cms/deleted-rooms');
+      // Add cache busting to ensure fresh data
+      const response = await fetch(`/api/cms/deleted-rooms?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
       if (response.ok) {
         const data = await response.json();
-        return data.deletedRooms || [];
+        const deletedRooms = data.deletedRooms || [];
+        console.log('Fetched deleted rooms:', deletedRooms);
+        return deletedRooms;
       }
     } catch (error) {
       console.error('Error fetching deleted rooms:', error);
@@ -405,12 +418,23 @@ export default function AdminPage() {
       // Filter out deleted rooms - only include rooms that are:
       // 1. In the API response (have images and not deleted), OR
       // 2. In metadata but not in deletedRooms list (no images but not deleted)
+      console.log('Deleted rooms set:', Array.from(deletedRoomsSet));
+      console.log('All metadata count:', allMetadata.length);
+      console.log('Rooms with images:', roomsWithImages.map(r => r.roomId));
+      
       const mergedRooms: RoomDisplay[] = allMetadata
         .filter(metadata => {
-          // Exclude if explicitly deleted
-          if (deletedRoomsSet.has(metadata.id)) {
+          // Exclude if explicitly deleted (check both exact match and case-insensitive)
+          const isDeleted = deletedRoomsSet.has(metadata.id) || 
+                           Array.from(deletedRoomsSet).some(deletedId => 
+                             deletedId.toLowerCase() === metadata.id.toLowerCase()
+                           );
+          
+          if (isDeleted) {
+            console.log(`Filtering out deleted room: ${metadata.id}`);
             return false;
           }
+          
           // Include if it has images (in API response) or if it doesn't have images but isn't deleted
           return true;
         })
