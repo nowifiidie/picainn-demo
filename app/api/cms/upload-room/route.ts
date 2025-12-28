@@ -5,6 +5,7 @@ import { Redis } from '@upstash/redis';
 
 const ROOM_METADATA_KEY = 'room-metadata';
 const ROOM_ORDER_KEY = 'room-order';
+const DELETED_ROOMS_KEY = 'deleted-rooms';
 
 const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
   ? new Redis({
@@ -82,14 +83,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Get next room number from Redis or fallback
+    // Exclude deleted rooms to avoid reusing IDs
     let roomId: string;
     if (redis) {
       const allRooms = await redis.get<Record<string, RoomMetadata>>(ROOM_METADATA_KEY) || {};
-      const roomNumbers = Object.keys(allRooms)
+      const deletedRooms = await redis.get<string[]>(DELETED_ROOMS_KEY) || [];
+      
+      // Get all room numbers from existing rooms (excluding deleted ones)
+      const activeRoomNumbers = Object.keys(allRooms)
+        .filter(id => !deletedRooms.includes(id)) // Exclude deleted rooms
         .map(id => parseInt(id.replace('room', '')) || 0)
         .filter(num => num > 0)
         .sort((a, b) => b - a);
-      const nextRoomNumber = roomNumbers.length > 0 ? roomNumbers[0] + 1 : 1;
+      
+      // Also check deleted rooms to find the highest number ever used
+      const deletedRoomNumbers = deletedRooms
+        .map(id => parseInt(id.replace('room', '')) || 0)
+        .filter(num => num > 0);
+      
+      const allRoomNumbers = [...activeRoomNumbers, ...deletedRoomNumbers];
+      const maxRoomNumber = allRoomNumbers.length > 0 ? Math.max(...allRoomNumbers) : 0;
+      const nextRoomNumber = maxRoomNumber + 1;
       roomId = `room${nextRoomNumber}`;
     } else {
       // Fallback: try to read from lib/rooms.ts for local dev
