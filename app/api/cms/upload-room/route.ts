@@ -52,6 +52,39 @@ export async function POST(request: NextRequest) {
 
     // Get next room number
     const roomsDir = join(process.cwd(), 'public', 'images', 'rooms');
+    
+    // Ensure the rooms directory exists first
+    try {
+      await mkdir(roomsDir, { recursive: true });
+    } catch (mkdirError: any) {
+      console.error('Error creating rooms directory:', mkdirError);
+      if (mkdirError.code === 'EROFS' || mkdirError.code === 'EACCES' || mkdirError.code === 'EPERM') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Cannot create rooms directory in production environment',
+            details: 'File system is read-only. Room creation requires write access to the file system.',
+            code: mkdirError.code
+          },
+          { status: 403 }
+        );
+      }
+      // ENOENT means parent doesn't exist - in serverless, public directory is read-only
+      if (mkdirError.code === 'ENOENT') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Cannot create rooms directory in production',
+            details: `The directory structure does not exist: ${roomsDir}. In serverless environments (like Vercel), the public directory is read-only and cannot be written to at runtime.`,
+            code: mkdirError.code,
+            note: 'Room creation requires write access to the file system. In production, you must add rooms via code commits to your repository.'
+          },
+          { status: 500 }
+        );
+      }
+      throw mkdirError;
+    }
+    
     const existingRooms = await readFile(join(process.cwd(), 'lib', 'rooms.ts'), 'utf-8');
     const roomMatches = existingRooms.match(/room(\d+):/g) || [];
     const roomNumbers = roomMatches.map(m => parseInt(m.match(/\d+/)![0])).sort((a, b) => b - a);
@@ -64,6 +97,7 @@ export async function POST(request: NextRequest) {
       await mkdir(roomDir, { recursive: true });
     } catch (mkdirError: any) {
       console.error('Error creating room directory:', mkdirError);
+      console.error('Room directory path:', roomDir);
       if (mkdirError.code === 'EROFS' || mkdirError.code === 'EACCES' || mkdirError.code === 'EPERM') {
         return NextResponse.json(
           {
@@ -73,6 +107,19 @@ export async function POST(request: NextRequest) {
             code: mkdirError.code
           },
           { status: 403 }
+        );
+      }
+      if (mkdirError.code === 'ENOENT') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Cannot create room directory in production',
+            details: `The directory structure does not exist: ${roomsDir}. In serverless environments (like Vercel), the public directory is read-only and cannot be written to at runtime. Room creation must be done locally or via code commits.`,
+            code: mkdirError.code,
+            path: roomDir,
+            note: 'To add rooms in production: 1) Add room locally, 2) Commit the changes to your repository, 3) Deploy. Alternatively, use cloud storage (Vercel Blob, AWS S3) for dynamic file uploads.'
+          },
+          { status: 500 }
         );
       }
       throw mkdirError;
