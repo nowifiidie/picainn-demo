@@ -24,6 +24,24 @@ interface RoomImages {
   roomId: string;
   mainImage: string;
   additionalImages: string[];
+  metadata?: {
+    name: string;
+    type: string;
+    description: string;
+    amenities: string[];
+    bedInfo: string;
+    maxGuests: number;
+    size: string;
+    address: string;
+    mapUrl: string;
+    altText?: {
+      en?: string;
+      ja?: string;
+      ko?: string;
+      zh?: string;
+    };
+    lastUpdated?: number;
+  };
 }
 
 export default function PropertyGallery() {
