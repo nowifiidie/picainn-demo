@@ -160,6 +160,12 @@ export default function AdminPage() {
     const imageToDelete = roomImages.find(img => img.filename === filename);
     const displayName = imageToDelete?.filename || filename;
     
+    // Don't allow deleting main image
+    if (filename === 'main.jpg' || filename === '_hidden_main.jpg') {
+      alert('Cannot delete the main image. Please set another image as main first, or delete the room entirely.');
+      return;
+    }
+    
     if (!confirm(`Are you sure you want to delete "${displayName}"?\n\nThis action cannot be undone.`)) return;
 
     setUpdatingImage(filename);
@@ -173,11 +179,16 @@ export default function AdminPage() {
         await new Promise(resolve => setTimeout(resolve, 300));
         await fetchRoomImages(roomId);
       } else {
-        alert(result.error || 'Failed to delete image');
+        // Show detailed error message if available
+        const errorMsg = result.details 
+          ? `${result.error}\n\n${result.details}`
+          : result.error || 'Failed to delete image';
+        alert(errorMsg);
       }
     } catch (error) {
       console.error('Error deleting image:', error);
-      alert('Failed to delete image');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to delete image: ${errorMessage}`);
     } finally {
       setUpdatingImage(null);
     }
