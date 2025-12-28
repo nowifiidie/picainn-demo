@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (roomExistsInRedis) {
+    if (roomExistsInRedis && redis) {
       // Update room in Redis (Blob Storage rooms)
       const allRooms = await redis.get<Record<string, any>>(ROOM_METADATA_KEY) || {};
       
