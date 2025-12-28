@@ -76,8 +76,11 @@ export default function AdminPage() {
     setIsRoomUploading(true);
     setRoomStatus(null);
 
+    // Store form reference before async operations
+    const form = e.currentTarget;
+
     try {
-      const formData = new FormData(e.currentTarget);
+      const formData = new FormData(form);
       const response = await fetch('/api/cms/upload-room', {
         method: 'POST',
         body: formData,
@@ -104,7 +107,10 @@ export default function AdminPage() {
       setIsRoomUploading(false);
       
       if (result.success) {
-        e.currentTarget.reset();
+        // Reset form if it still exists
+        if (form) {
+          form.reset();
+        }
         // Refresh rooms list
         await fetchRooms();
       } else {
