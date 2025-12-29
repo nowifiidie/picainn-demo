@@ -27,6 +27,7 @@ interface RoomDisplay {
   address?: string;
   mapUrl?: string;
   amenities?: string[];
+  lastUpdated?: number; // Include lastUpdated for cache busting
   altText?: {
     en?: string;
     ja?: string;
