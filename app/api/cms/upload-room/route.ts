@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Upload images to Blob Storage
+    // Upload images to Cloudflare R2
     const uploadedImages: { url: string; filename: string }[] = [];
     let mainImageUrl: string | undefined;
 
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (blobError: any) {
-      console.error('Error uploading images to Blob Storage:', blobError);
+      console.error('Error uploading images to R2:', blobError);
       // Try to clean up any uploaded images
       const { deleteImageFromBlob } = await import('@/lib/blob-storage');
       for (const img of uploadedImages) {
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to upload images to Blob Storage',
+          error: 'Failed to upload images to R2',
           details: blobError.message || 'Error uploading images',
         },
         { status: 500 }

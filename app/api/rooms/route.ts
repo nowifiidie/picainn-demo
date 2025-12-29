@@ -68,12 +68,9 @@ export async function GET() {
             continue;
           }
 
-          // Get images from Blob Storage
-          // Add a small delay to ensure Blob Storage has propagated any recent changes
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Get images from Cloudflare R2
           const images = await listRoomImages(roomId);
           // Find main image by filename (main.jpg) - this is the source of truth
-          // Don't rely on Redis mainImageUrl as it might be stale
           const mainImage = images.find(img => img.filename === 'main.jpg' && !img.isHidden);
           const additionalImages = images
             .filter(img => img.filename !== 'main.jpg' && !img.isHidden)

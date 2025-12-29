@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
     // Ensure room has a main image (auto-promote one if none exists)
     await ensureMainImage(roomId);
     
-    // List images from Blob Storage
+    // List images from Cloudflare R2
     const blobImages = await listRoomImages(roomId);
 
     // Filter out deleted images

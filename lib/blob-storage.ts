@@ -1,6 +1,16 @@
-import { put, del, list, head } from '@vercel/blob';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
 
-const BLOB_STORE_NAME = process.env.BLOB_READ_WRITE_TOKEN ? undefined : 'default'; // Use default if token is set via env
+// Configure Cloudflare R2 (S3-compatible)
+const r2Client = new S3Client({
+  region: 'auto',
+  endpoint: process.env.R2_ENDPOINT || `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+  },
+});
+
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || '';
 
 export interface BlobImageInfo {
   url: string;
@@ -10,118 +20,153 @@ export interface BlobImageInfo {
 }
 
 /**
- * Upload an image to Vercel Blob Storage
+ * Get public URL for an R2 object
+ */
+function getPublicUrl(key: string): string {
+  // If custom domain is set, use it; otherwise use R2 public URL
+  if (process.env.R2_PUBLIC_URL) {
+    return `${process.env.R2_PUBLIC_URL}/${key}`;
+  }
+  // R2 public URL format: https://pub-{account-id}.r2.dev/{bucket-name}/{key}
+  const accountId = process.env.R2_ACCOUNT_ID || '';
+  return `https://pub-${accountId}.r2.dev/${R2_BUCKET_NAME}/${key}`;
+}
+
+/**
+ * Upload an image to Cloudflare R2
  */
 export async function uploadImageToBlob(
   path: string,
   file: File | Buffer,
   options?: { contentType?: string; allowOverwrite?: boolean }
 ): Promise<{ url: string }> {
-  // If we want to overwrite, delete the existing blob first
-  if (options?.allowOverwrite) {
-    try {
-      const { list, del } = await import('@vercel/blob');
-      const prefix = path.substring(0, path.lastIndexOf('/') + 1);
-      const { blobs } = await list({ prefix });
-      const existingBlob = blobs.find(b => b.pathname === path);
-      if (existingBlob) {
-        await del(existingBlob.url);
-        console.log(`Deleted existing blob before upload: ${path}`);
-        // Wait a moment for deletion to propagate
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    } catch (deleteError) {
-      console.warn(`Could not delete existing blob ${path} (may not exist):`, deleteError);
-      // Continue with upload even if delete fails
-    }
-  }
-
   try {
-    const blob = await put(path, file, {
-      access: 'public',
-      contentType: options?.contentType,
-    });
-    return { url: blob.url };
-  } catch (error: any) {
-    // If blob still exists (delete might have failed), delete and retry once
-    if (error?.message?.includes('already exists') && options?.allowOverwrite) {
-      console.warn(`Blob ${path} still exists after delete, retrying...`);
-      try {
-        const { list, del } = await import('@vercel/blob');
-        const prefix = path.substring(0, path.lastIndexOf('/') + 1);
-        const { blobs } = await list({ prefix });
-        const existingBlob = blobs.find(b => b.pathname === path);
-        if (existingBlob) {
-          await del(existingBlob.url);
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-        // Retry upload
-        const blob = await put(path, file, {
-          access: 'public',
-          contentType: options?.contentType,
-        });
-        return { url: blob.url };
-      } catch (retryError) {
-        console.error('Retry failed:', retryError);
-        throw error; // Throw original error
-      }
+    // Convert File to Buffer if needed
+    let buffer: Buffer;
+    if (file instanceof File) {
+      const arrayBuffer = await file.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+    } else {
+      buffer = file;
     }
+
+    // Upload to R2
+    const command = new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: path,
+      Body: buffer,
+      ContentType: options?.contentType || 'image/jpeg',
+    });
+
+    await r2Client.send(command);
+
+    // Return public URL
+    const url = getPublicUrl(path);
+    return { url };
+  } catch (error) {
+    console.error('Error uploading to R2:', error);
     throw error;
   }
 }
 
 /**
- * Delete an image from Vercel Blob Storage
+ * Delete an image from Cloudflare R2
  */
 export async function deleteImageFromBlob(url: string): Promise<void> {
   try {
-    await del(url);
+    // Extract key from URL
+    // URL format: https://pub-{account-id}.r2.dev/{bucket}/{key}
+    // or custom domain: https://custom-domain.com/{key}
+    let key: string = '';
+    if (url.includes('.r2.dev/')) {
+      // R2 public URL: https://pub-{account-id}.r2.dev/{bucket-name}/{key}
+      const urlParts = url.split('.r2.dev/');
+      if (urlParts[1]) {
+        const pathAfterDomain = urlParts[1];
+        // Remove bucket name (first segment) to get the key
+        const pathSegments = pathAfterDomain.split('/');
+        if (pathSegments.length > 1) {
+          key = pathSegments.slice(1).join('/');
+        } else {
+          key = pathAfterDomain;
+        }
+      }
+    } else if (process.env.R2_PUBLIC_URL && url.startsWith(process.env.R2_PUBLIC_URL)) {
+      // Custom domain URL: https://custom-domain.com/{key}
+      key = url.replace(process.env.R2_PUBLIC_URL, '').replace(/^\//, '');
+    } else {
+      // Try to extract from any URL format
+      try {
+        const urlObj = new URL(url);
+        key = urlObj.pathname.startsWith('/') ? urlObj.pathname.slice(1) : urlObj.pathname;
+      } catch {
+        // Fallback: extract filename from URL
+        const lastSlash = url.lastIndexOf('/');
+        key = lastSlash >= 0 ? url.substring(lastSlash + 1) : url;
+      }
+    }
+
+    if (!key) {
+      console.warn(`Could not extract key from URL: ${url}`);
+      return;
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+    });
+
+    await r2Client.send(command);
   } catch (error) {
-    console.error('Error deleting blob:', error);
+    console.error('Error deleting from R2:', error);
     // Don't throw - might already be deleted
   }
 }
 
 /**
- * List all images for a room from Blob Storage
+ * List all images for a room from Cloudflare R2
  */
 export async function listRoomImages(roomId: string): Promise<BlobImageInfo[]> {
   try {
     const prefix = `rooms/${roomId}/`;
-    // Force fresh listing by adding cache busting
-    // Vercel Blob list() might cache results, so we add a timestamp to ensure fresh data
-    const result = await list({ 
-      prefix,
-      // Add a random query to potentially bypass any internal caching
-    });
     
-    if (!result || !result.blobs) {
-      console.warn(`No blobs found for room ${roomId} with prefix ${prefix}`);
+    const command = new ListObjectsV2Command({
+      Bucket: R2_BUCKET_NAME,
+      Prefix: prefix,
+      MaxKeys: 1000,
+    });
+
+    const result = await r2Client.send(command);
+
+    if (!result.Contents || result.Contents.length === 0) {
+      console.warn(`No images found for room ${roomId} with prefix ${prefix}`);
       return [];
     }
-    
-    const images: BlobImageInfo[] = result.blobs
-      .filter(blob => {
-        if (!blob.pathname) return false;
-        const ext = blob.pathname.toLowerCase();
+
+    const images: BlobImageInfo[] = result.Contents
+      .filter((object) => {
+        if (!object.Key) return false;
+        const ext = object.Key.toLowerCase();
         return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || ext.endsWith('.png') || ext.endsWith('.webp');
       })
-      .map(blob => {
-        const filename = blob.pathname.split('/').pop() || '';
-        const isMain = filename === 'main.jpg';
+      .map((object) => {
+        const key = object.Key || '';
+        const filename = key.split('/').pop() || '';
+        const isMain = filename === 'main.jpg' || filename === 'main.jpeg';
         const isHidden = filename.startsWith('_hidden_');
+        
         return {
-          url: blob.url,
+          url: getPublicUrl(key),
           filename,
           isMain,
           isHidden,
         };
       });
-    
+
     console.log(`Found ${images.length} images for room ${roomId}:`, images.map(img => img.filename));
     return images;
   } catch (error) {
-    console.error('Error listing room images from blob:', error);
+    console.error('Error listing room images from R2:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error details:', errorMessage);
     return [];
@@ -129,14 +174,45 @@ export async function listRoomImages(roomId: string): Promise<BlobImageInfo[]> {
 }
 
 /**
- * Check if a blob exists
+ * Check if an image exists in Cloudflare R2
  */
 export async function blobExists(url: string): Promise<boolean> {
   try {
-    await head(url);
+    // Extract key from URL (same logic as deleteImageFromBlob)
+    let key: string = '';
+    if (url.includes('.r2.dev/')) {
+      const urlParts = url.split('.r2.dev/');
+      if (urlParts[1]) {
+        const pathAfterDomain = urlParts[1];
+        const pathSegments = pathAfterDomain.split('/');
+        if (pathSegments.length > 1) {
+          key = pathSegments.slice(1).join('/');
+        } else {
+          key = pathAfterDomain;
+        }
+      }
+    } else if (process.env.R2_PUBLIC_URL && url.startsWith(process.env.R2_PUBLIC_URL)) {
+      key = url.replace(process.env.R2_PUBLIC_URL, '').replace(/^\//, '');
+    } else {
+      try {
+        const urlObj = new URL(url);
+        key = urlObj.pathname.startsWith('/') ? urlObj.pathname.slice(1) : urlObj.pathname;
+      } catch {
+        const lastSlash = url.lastIndexOf('/');
+        key = lastSlash >= 0 ? url.substring(lastSlash + 1) : url;
+      }
+    }
+
+    if (!key) return false;
+
+    const command = new HeadObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+    });
+
+    await r2Client.send(command);
     return true;
   } catch {
     return false;
   }
 }
-
