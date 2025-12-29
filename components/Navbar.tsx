@@ -18,30 +18,32 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-gray-200/50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-            {/* Full logo - no text needed */}
-            <Image
-              src="/logo.png"
-              alt="picainn logo"
-              width={80}
-              height={80}
-              className="h-8 w-auto object-contain"
-              priority
-              unoptimized
-            />
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+              {/* Full logo - no text needed */}
+              <Image
+                src="/logo.png"
+                alt="picainn logo"
+                width={80}
+                height={80}
+                className="h-8 w-auto object-contain"
+                priority
+                unoptimized
+              />
+            </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm text-[#333333] hover:text-[#8B7355] transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {/* Desktop Navigation - moved to left with logo */}
+            <div className="hidden md:flex items-center gap-6">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-[#333333] hover:text-[#8B7355] transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
