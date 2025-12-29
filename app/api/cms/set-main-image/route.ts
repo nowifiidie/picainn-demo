@@ -149,7 +149,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Now that we have safe copies, delete old images at target paths
+    // IMPORTANT: Delete the old blobs BEFORE uploading new ones to ensure new URLs are generated
     try {
+      console.log('Deleting old images at target paths:', { main: mainImage.url, source: sourceImage.url });
       await Promise.all([
         deleteImageFromBlob(mainImage.url).catch(err => 
           console.warn('Could not delete old main image:', err)
@@ -159,9 +161,10 @@ export async function POST(request: NextRequest) {
         ),
       ]);
       
-      // Wait for deletions to propagate
-      await new Promise(resolve => setTimeout(resolve, 500));
-      console.log('Deleted old images at target paths');
+      // Wait longer for deletions to fully propagate in Blob Storage
+      // This ensures new uploads get new URLs instead of reusing old ones
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Deleted old images at target paths, waiting for propagation...');
     } catch (deleteError) {
       console.error('Error deleting old images:', deleteError);
       // Continue anyway - upload might still work
@@ -184,15 +187,28 @@ export async function POST(request: NextRequest) {
         tempSourceResponse.blob(),
       ]);
       
-      // Upload to final paths
+      console.log('Uploading to final paths (after deletion)...');
+      // Upload to final paths with allowOverwrite to ensure proper replacement
+      // This ensures the blob is properly overwritten even if deletion didn't fully propagate
       [newMainResult, newSourceResult] = await Promise.all([
         uploadImageToBlob(`rooms/${roomId}/main.jpg`, new File([tempMainBlob], 'main.jpg', { type: tempMainBlob.type }), {
           contentType: tempMainBlob.type || 'image/jpeg',
+          allowOverwrite: true, // Force overwrite to ensure new content
         }),
         uploadImageToBlob(`rooms/${roomId}/${cleanFilename}`, new File([tempSourceBlob], cleanFilename, { type: tempSourceBlob.type }), {
           contentType: tempSourceBlob.type || 'image/jpeg',
+          allowOverwrite: true, // Force overwrite to ensure new content
         }),
       ]);
+      
+      console.log('New URLs after upload:', {
+        oldMainUrl: mainImage.url,
+        newMainUrl: newMainResult.url,
+        urlChanged: newMainResult.url !== mainImage.url,
+        oldSourceUrl: sourceImage.url,
+        newSourceUrl: newSourceResult.url,
+        sourceUrlChanged: newSourceResult.url !== sourceImage.url,
+      });
       
       console.log('Successfully swapped images:', {
         newMain: newMainResult.url,
@@ -301,6 +317,9 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/api/cms/room-images`);
     revalidatePath(`/api/rooms`);
 
+    // Wait a moment for Blob Storage to propagate the changes
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     // Final verification - list images one more time to confirm swap
     const finalImages = await listRoomImages(roomId);
     const finalMain = finalImages.find(img => img.filename === 'main.jpg' && !img.isHidden);
@@ -310,15 +329,20 @@ export async function POST(request: NextRequest) {
       mainImageFound: !!finalMain,
       sourceImageFound: !!finalSource,
       mainImageUrl: finalMain?.url,
-      allImages: finalImages.map(img => ({ filename: img.filename, isMain: img.isMain, isHidden: img.isHidden }))
+      newMainResultUrl: newMainResult.url,
+      urlsMatch: finalMain?.url === newMainResult.url,
+      allImages: finalImages.map(img => ({ filename: img.filename, isMain: img.isMain, isHidden: img.isHidden, url: img.url }))
     });
+
+    // Use the verified main image URL (from Blob Storage listing, not from upload result)
+    const verifiedMainUrl = finalMain?.url || newMainResult.url;
 
     return NextResponse.json({
       success: true,
       message: 'Main image swapped successfully',
       timestamp: Date.now(),
       swapped: {
-        newMain: newMainResult.url,
+        newMain: verifiedMainUrl,
         newSource: newSourceResult.url,
         oldMain: mainImage.url,
         oldSource: sourceImage.url,
@@ -326,7 +350,8 @@ export async function POST(request: NextRequest) {
       verification: {
         mainImageExists: !!finalMain,
         sourceImageExists: !!finalSource,
-        mainImageUrl: finalMain?.url,
+        mainImageUrl: verifiedMainUrl,
+        urlChanged: verifiedMainUrl !== mainImage.url,
       },
     });
   } catch (error) {

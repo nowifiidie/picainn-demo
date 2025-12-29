@@ -377,14 +377,22 @@ export default function AdminPage() {
         await fetchRooms();
         
         console.log('Image refresh completed. Check console for verification details.');
+        console.log('Swap result:', result);
         
         // Show success message
         if (result.verification) {
           console.log('Verification:', result.verification);
           if (!result.verification.mainImageExists) {
             alert('Warning: Main image may not have been updated. Please refresh the page.');
+          } else if (!result.verification.urlChanged) {
+            console.warn('WARNING: Main image URL did not change after swap!');
+            alert('Warning: Main image URL did not change. The swap may not have completed. Please refresh the page.');
           }
         }
+        
+        // Force a complete page refresh to ensure latest images are loaded
+        // This is necessary because Next.js Image component may cache the old image
+        window.location.reload();
       } else {
         const errorMsg = result.details 
           ? `${result.error}\n\n${result.details}`
@@ -580,12 +588,19 @@ export default function AdminPage() {
             };
           }
 
+          // Add cache busting to image URL to ensure fresh image after swaps
+          // Use current timestamp to force refresh after image swaps
+          const cacheBuster = Date.now();
+          const imageUrl = room.mainImage.includes('?') 
+            ? `${room.mainImage.split('?')[0]}?t=${cacheBuster}`
+            : `${room.mainImage}?t=${cacheBuster}`;
+
           return {
             roomId: room.roomId,
             name: metadata.name,
             type: metadata.type,
             description: metadata.description,
-            image: room.mainImage,
+            image: imageUrl,
             maxGuests: metadata.maxGuests,
             size: metadata.size,
             bedInfo: metadata.bedInfo,
@@ -799,7 +814,7 @@ export default function AdminPage() {
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         unoptimized
-                        key={room.image}
+                        key={`${room.roomId}-${room.image}`}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-200">

@@ -66,9 +66,11 @@ export async function GET() {
 
           // Get images from Blob Storage
           const images = await listRoomImages(roomId);
-          const mainImage = images.find(img => img.isMain && !img.isHidden);
+          // Find main image by filename (main.jpg) - this is the source of truth
+          // Don't rely on Redis mainImageUrl as it might be stale
+          const mainImage = images.find(img => img.filename === 'main.jpg' && !img.isHidden);
           const additionalImages = images
-            .filter(img => !img.isMain && !img.isHidden)
+            .filter(img => img.filename !== 'main.jpg' && !img.isHidden)
             .sort((a, b) => a.filename.localeCompare(b.filename));
 
           // Include room even if no main image (use first available image or placeholder)
