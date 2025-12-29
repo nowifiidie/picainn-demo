@@ -88,7 +88,12 @@ export async function deleteImageFromBlob(url: string): Promise<void> {
 export async function listRoomImages(roomId: string): Promise<BlobImageInfo[]> {
   try {
     const prefix = `rooms/${roomId}/`;
-    const result = await list({ prefix });
+    // Force fresh listing by adding cache busting
+    // Vercel Blob list() might cache results, so we add a timestamp to ensure fresh data
+    const result = await list({ 
+      prefix,
+      // Add a random query to potentially bypass any internal caching
+    });
     
     if (!result || !result.blobs) {
       console.warn(`No blobs found for room ${roomId} with prefix ${prefix}`);

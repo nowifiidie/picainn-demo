@@ -40,6 +40,10 @@ interface RoomImages {
   };
 }
 
+// Force dynamic rendering and disable caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const availableRooms: RoomImages[] = [];
@@ -65,6 +69,8 @@ export async function GET() {
           }
 
           // Get images from Blob Storage
+          // Add a small delay to ensure Blob Storage has propagated any recent changes
+          await new Promise(resolve => setTimeout(resolve, 500));
           const images = await listRoomImages(roomId);
           // Find main image by filename (main.jpg) - this is the source of truth
           // Don't rely on Redis mainImageUrl as it might be stale

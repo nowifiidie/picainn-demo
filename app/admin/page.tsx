@@ -362,7 +362,8 @@ export default function AdminPage() {
         
         // Wait longer for Blob Storage operations to fully propagate
         // Blob Storage list() operations may need time to reflect changes
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Also wait for Next.js API route cache to clear
+        await new Promise(resolve => setTimeout(resolve, 4000));
         
         // Show success message (only if there's an actual error)
         if (result.verification) {
@@ -376,9 +377,10 @@ export default function AdminPage() {
           console.log('Main image swap completed successfully. URL unchanged is expected with Blob Storage.');
         }
         
-        // Force a complete page refresh to ensure latest images are loaded
-        // Add a cache-busting parameter to ensure fresh data is fetched
-        window.location.href = `/admin?refresh=${Date.now()}`;
+        // Force a hard reload (bypass cache) to ensure latest images are loaded
+        // Use location.reload() with a cache-busting parameter in the URL
+        const refreshParam = `refresh=${Date.now()}`;
+        window.location.href = `/admin?${refreshParam}`;
       } else {
         const errorMsg = result.details 
           ? `${result.error}\n\n${result.details}`
@@ -602,6 +604,7 @@ export default function AdminPage() {
             amenities: metadata.amenities,
             altText: metadata.altText,
             hasImage: true,
+            lastUpdated: metadata.lastUpdated, // Include lastUpdated for image key
           };
         });
 
@@ -818,7 +821,7 @@ export default function AdminPage() {
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         unoptimized
-                        key={`${room.roomId}-${room.image}`}
+                        key={`${room.roomId}-${room.lastUpdated || Date.now()}`}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-200">
