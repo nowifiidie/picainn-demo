@@ -11,13 +11,13 @@ export default function Footer() {
           </p>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-600 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} Minpaku Guest House. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} picainn. All rights reserved.</p>
           <p className="mt-2">
             <a 
-              href="mailto:info@minpaku.com" 
+              href="mailto:info@picainn.com" 
               className="text-gray-300 hover:text-white transition-colors underline"
             >
-              info@minpaku.com
+              info@picainn.com
             </a>
           </p>
         </div>

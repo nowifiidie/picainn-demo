@@ -8,7 +8,7 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata = {
-  title: 'Minpaku Guest House',
+  title: 'picainn - Meeting Center',
   description: 'Experience authentic Japanese hospitality in the heart of Tokyo',
 };
 
