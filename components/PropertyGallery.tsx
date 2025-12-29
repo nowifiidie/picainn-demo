@@ -154,17 +154,26 @@ export default function PropertyGallery() {
                 onClick={() => setSelectedRoom(room)}
                 className="relative aspect-[4/3] overflow-hidden rounded-sm group cursor-pointer bg-gray-100 shadow-lg transition-all"
               >
-                <Image
-                  src={room.image}
-                  alt={room.name}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                  quality={85}
-                  unoptimized
-                  key={`${room.id}-${room.image}`}
-                />
+                {room.image ? (
+                  <Image
+                    src={room.image}
+                    alt={room.name}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    quality={85}
+                    unoptimized
+                    key={`${room.id}-${room.image}`}
+                    onError={(e) => {
+                      console.error('Image failed to load:', room.image, 'for room:', room.name);
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <p className="text-gray-400 text-sm">No image</p>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
                   <h3 className="text-white font-medium text-lg mb-1">{room.name}</h3>

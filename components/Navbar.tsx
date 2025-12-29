@@ -24,9 +24,9 @@ export default function Navbar() {
               <Image
                 src="/logo.png"
                 alt="picainn logo"
-                width={50}
-                height={50}
-                className="h-6 w-6 object-contain"
+                width={60}
+                height={60}
+                className="h-10 w-10 object-contain"
                 priority
                 unoptimized
               />
