@@ -379,18 +379,16 @@ export default function AdminPage() {
         console.log('Image refresh completed. Check console for verification details.');
         console.log('Swap result:', result);
         
-        // Show success message
+        // Show success message (only if there's an actual error)
         if (result.verification) {
           console.log('Verification:', result.verification);
           if (!result.verification.mainImageExists) {
             alert('Warning: Main image may not have been updated. Please refresh the page.');
-          } else if (!result.verification.urlChanged && result.verification.note?.includes('expected')) {
-            // URL not changing is expected with Blob Storage - content is updated
-            console.log('Note: URL unchanged (expected) - content is updated, cache busting will handle refresh');
-          } else if (!result.verification.urlChanged) {
-            console.warn('WARNING: Main image URL did not change after swap!');
-            // Don't show alert - this is expected behavior with Blob Storage
+            return; // Don't reload if there's an error
           }
+          // URL not changing is expected with Blob Storage - content is updated
+          // No need to show warning - the swap is working correctly
+          console.log('Main image swap completed successfully. URL unchanged is expected with Blob Storage.');
         }
         
         // Force a complete page refresh to ensure latest images are loaded
