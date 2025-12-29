@@ -29,7 +29,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all room images from Blob Storage
-    const roomImages = await listRoomImages(roomId);
+    let roomImages = await listRoomImages(roomId);
+    
+    // If no main image exists, auto-promote one first
+    const hasMainImage = roomImages.some(img => img.filename === 'main.jpg' && !img.isHidden);
+    if (!hasMainImage) {
+      console.log(`No main image found for room ${roomId}, auto-promoting one...`);
+      // Find the first available non-hidden image to promote
+      const availableImages = roomImages.filter(img => !img.isHidden && img.filename !== 'main.jpg');
+      if (availableImages.length > 0) {
+        const imageToPromote = availableImages[Math.floor(Math.random() * availableImages.length)];
+        console.log(`Auto-promoting ${imageToPromote.filename} to main.jpg`);
+        
+        // Download and upload as main.jpg
+        const imageResponse = await fetch(imageToPromote.url);
+        if (imageResponse.ok) {
+          const imageBlob = await imageResponse.blob();
+          const imageFile = new File([imageBlob], 'main.jpg', { type: imageBlob.type || 'image/jpeg' });
+          await uploadImageToBlob(`rooms/${roomId}/main.jpg`, imageFile, {
+            contentType: imageBlob.type || 'image/jpeg',
+            allowOverwrite: true,
+          });
+          // Re-fetch images after promotion
+          roomImages = await listRoomImages(roomId);
+        }
+      }
+    }
     
     // Find source image - check both with and without _hidden_ prefix
     const sourceImage = roomImages.find(img => 
