@@ -218,15 +218,24 @@ export default function AdminPage() {
     setIsLoadingImages(true);
     try {
       // Add cache busting timestamp to force fresh data
-      const response = await fetch(`/api/cms/room-images?roomId=${roomId}&t=${Date.now()}`);
+      const cacheBuster = Date.now();
+      const response = await fetch(`/api/cms/room-images?roomId=${roomId}&t=${cacheBuster}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       const result = await response.json();
+      console.log('Fetched room images:', { roomId, imageCount: result.images?.length, images: result.images });
+      
       if (result.success) {
         // Add cache busting timestamp to each image URL
         const imagesWithCacheBust = (result.images || []).map((img: any) => ({
           ...img,
-          url: `${img.url}?t=${Date.now()}`,
+          url: `${img.url}?t=${cacheBuster}`,
         }));
         setRoomImages(imagesWithCacheBust);
+        console.log('Updated room images state:', imagesWithCacheBust.map((img: any) => ({ filename: img.filename, isMain: img.isMain })));
       }
     } catch (error) {
       console.error('Error fetching room images:', error);
@@ -339,6 +348,7 @@ export default function AdminPage() {
   async function handleSetMainImage(roomId: string, filename: string) {
     setUpdatingImage(filename);
     try {
+      console.log('Setting main image:', { roomId, filename });
       const response = await fetch('/api/cms/set-main-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -348,15 +358,33 @@ export default function AdminPage() {
       console.log('Set main image response:', result);
       
       if (result.success) {
-        // Wait a bit for Blob Storage operations to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('Swap successful, refreshing images...', result);
+        
+        // Wait longer for Blob Storage operations to complete and propagate
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
         // Force a hard refresh by clearing the image state first and updating refresh key
         setRoomImages([]);
         setImageRefreshKey(prev => prev + 1);
-        // Refresh images with cache busting
-        await fetchRoomImages(roomId);
+        
+        // Refresh images with aggressive cache busting - try multiple times
+        for (let i = 0; i < 3; i++) {
+          await fetchRoomImages(roomId);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
         // Then refresh rooms list
-        fetchRooms();
+        await fetchRooms();
+        
+        console.log('Image refresh completed. Check console for verification details.');
+        
+        // Show success message
+        if (result.verification) {
+          console.log('Verification:', result.verification);
+          if (!result.verification.mainImageExists) {
+            alert('Warning: Main image may not have been updated. Please refresh the page.');
+          }
+        }
       } else {
         const errorMsg = result.details 
           ? `${result.error}\n\n${result.details}`

@@ -197,8 +197,28 @@ export async function POST(request: NextRequest) {
       console.log('Successfully swapped images:', {
         newMain: newMainResult.url,
         newSource: newSourceResult.url,
+        oldMain: mainImage.url,
+        oldSource: sourceImage.url,
         note: 'Both images preserved - only positions swapped'
       });
+      
+      // Verify the swap actually happened by listing images again
+      const verifyImages = await listRoomImages(roomId);
+      const newMainVerify = verifyImages.find(img => img.filename === 'main.jpg');
+      const newSourceVerify = verifyImages.find(img => img.filename === cleanFilename);
+      
+      console.log('Verification after swap:', {
+        mainImageExists: !!newMainVerify,
+        sourceImageExists: !!newSourceVerify,
+        allImages: verifyImages.map(img => ({ filename: img.filename, isMain: img.isMain }))
+      });
+      
+      if (!newMainVerify) {
+        console.error('WARNING: main.jpg not found after swap!');
+      }
+      if (!newSourceVerify) {
+        console.error('WARNING: source image not found after swap!');
+      }
     } catch (finalUploadError) {
       console.error('Error uploading to final paths:', finalUploadError);
       
@@ -275,14 +295,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Revalidate paths to clear Next.js cache
     revalidatePath('/');
-    revalidatePath(`/images/rooms/${roomId}/main.jpg`);
-    revalidatePath(`/images/rooms/${roomId}/${filename}`);
+    revalidatePath('/admin');
+    revalidatePath(`/api/cms/room-images`);
+    revalidatePath(`/api/rooms`);
+
+    // Final verification - list images one more time to confirm swap
+    const finalImages = await listRoomImages(roomId);
+    const finalMain = finalImages.find(img => img.filename === 'main.jpg' && !img.isHidden);
+    const finalSource = finalImages.find(img => img.filename === cleanFilename && !img.isHidden);
+    
+    console.log('Final verification:', {
+      mainImageFound: !!finalMain,
+      sourceImageFound: !!finalSource,
+      mainImageUrl: finalMain?.url,
+      allImages: finalImages.map(img => ({ filename: img.filename, isMain: img.isMain, isHidden: img.isHidden }))
+    });
 
     return NextResponse.json({
       success: true,
       message: 'Main image swapped successfully',
       timestamp: Date.now(),
+      swapped: {
+        newMain: newMainResult.url,
+        newSource: newSourceResult.url,
+        oldMain: mainImage.url,
+        oldSource: sourceImage.url,
+      },
+      verification: {
+        mainImageExists: !!finalMain,
+        sourceImageExists: !!finalSource,
+        mainImageUrl: finalMain?.url,
+      },
     });
   } catch (error) {
     console.error('Error setting main image:', error);
