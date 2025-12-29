@@ -8,8 +8,12 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata = {
-  title: 'picainn - Meeting Center',
+  title: 'picainn House',
   description: 'Experience authentic Japanese hospitality in the heart of Tokyo',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({

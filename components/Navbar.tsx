@@ -19,14 +19,18 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <Image
-              src="/logo.png"
-              alt="picainn logo"
-              width={40}
-              height={40}
-              className="w-10 h-10 object-contain"
-              priority
-            />
+            {/* Logo - will show placeholder until logo.png is added to public folder */}
+            <div className="relative w-10 h-10 flex items-center justify-center">
+              <Image
+                src="/logo.png"
+                alt="picainn logo"
+                width={40}
+                height={40}
+                className="w-10 h-10 object-contain"
+                priority
+                unoptimized
+              />
+            </div>
             <span className="text-xl font-serif text-[#8B1A1A] lowercase">picainn</span>
           </Link>
 
