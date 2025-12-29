@@ -11,8 +11,12 @@ export const metadata = {
   title: 'picainn House',
   description: 'Experience authentic Japanese hospitality in the heart of Tokyo',
   icons: {
-    icon: '/logo.png',
+    icon: [
+      { url: '/logo.png', type: 'image/png' },
+      { url: '/favicon.ico', type: 'image/x-icon' },
+    ],
     apple: '/logo.png',
+    shortcut: '/favicon.ico',
   },
 };
 
