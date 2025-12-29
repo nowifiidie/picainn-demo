@@ -10,14 +10,7 @@ const notoSansJP = Noto_Sans_JP({
 export const metadata = {
   title: 'picainn House',
   description: 'Experience authentic Japanese hospitality in the heart of Tokyo',
-  icons: {
-    icon: [
-      { url: '/logo.png', type: 'image/png' },
-      { url: '/favicon.ico', type: 'image/x-icon' },
-    ],
-    apple: '/logo.png',
-    shortcut: '/favicon.ico',
-  },
+  // Next.js will automatically use app/icon.png as favicon
 };
 
 export default function RootLayout({

@@ -18,25 +18,17 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-gray-200/50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            {/* Logo - add logo.png to public folder for it to display */}
-            <div className="relative w-10 h-10 flex items-center justify-center bg-[#8B1A1A] rounded-full">
-              <Image
-                src="/logo.png"
-                alt="picainn logo"
-                width={40}
-                height={40}
-                className="w-10 h-10 object-contain"
-                priority
-                unoptimized
-                onError={(e) => {
-                  // Hide broken image if logo doesn't exist
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
-              />
-            </div>
-            <span className="text-xl font-serif text-[#8B1A1A] lowercase">picainn</span>
+          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+            {/* Full logo - no text needed */}
+            <Image
+              src="/logo.png"
+              alt="picainn logo"
+              width={120}
+              height={120}
+              className="h-12 w-auto object-contain"
+              priority
+              unoptimized
+            />
           </Link>
 
           {/* Desktop Navigation */}
