@@ -360,24 +360,8 @@ export default function AdminPage() {
       if (result.success) {
         console.log('Swap successful, refreshing images...', result);
         
-        // Wait longer for Blob Storage operations to complete and propagate
+        // Wait for Blob Storage operations to complete and propagate
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Force a hard refresh by clearing the image state first and updating refresh key
-        setRoomImages([]);
-        setImageRefreshKey(prev => prev + 1);
-        
-        // Refresh images with aggressive cache busting - try multiple times
-        for (let i = 0; i < 3; i++) {
-          await fetchRoomImages(roomId);
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        
-        // Then refresh rooms list
-        await fetchRooms();
-        
-        console.log('Image refresh completed. Check console for verification details.');
-        console.log('Swap result:', result);
         
         // Show success message (only if there's an actual error)
         if (result.verification) {
