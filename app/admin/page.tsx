@@ -384,14 +384,18 @@ export default function AdminPage() {
           console.log('Verification:', result.verification);
           if (!result.verification.mainImageExists) {
             alert('Warning: Main image may not have been updated. Please refresh the page.');
+          } else if (!result.verification.urlChanged && result.verification.note?.includes('expected')) {
+            // URL not changing is expected with Blob Storage - content is updated
+            console.log('Note: URL unchanged (expected) - content is updated, cache busting will handle refresh');
           } else if (!result.verification.urlChanged) {
             console.warn('WARNING: Main image URL did not change after swap!');
-            alert('Warning: Main image URL did not change. The swap may not have completed. Please refresh the page.');
+            // Don't show alert - this is expected behavior with Blob Storage
           }
         }
         
         // Force a complete page refresh to ensure latest images are loaded
         // This is necessary because Next.js Image component may cache the old image
+        // Even if URL doesn't change, the content is updated and cache busting will force refresh
         window.location.reload();
       } else {
         const errorMsg = result.details 

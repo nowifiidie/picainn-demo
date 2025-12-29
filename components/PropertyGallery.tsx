@@ -76,14 +76,17 @@ export default function PropertyGallery() {
             const numericId = parseInt(roomImg.roomId.replace('room', '')) || 0;
 
             // Combine main image with additional images
-            // Add cache busting timestamp to image URLs using lastUpdated from metadata
+            // Add cache busting timestamp to ALL image URLs (including Blob Storage URLs)
+            // This is critical because Vercel Blob Storage may return the same URL even after overwriting
             const timestamp = metadata.lastUpdated || Date.now();
-            // For Blob URLs, they already include cache parameters, so only add if it's a local path
-            const cacheBustMain = roomImg.mainImage.startsWith('http') 
-              ? roomImg.mainImage 
+            // Always add cache busting, even for HTTP/Blob URLs
+            const cacheBustMain = roomImg.mainImage.includes('?') 
+              ? `${roomImg.mainImage.split('?')[0]}?t=${timestamp}`
               : `${roomImg.mainImage}?t=${timestamp}`;
             const cacheBustAdditional = roomImg.additionalImages.map(img => 
-              img.startsWith('http') ? img : `${img}?t=${timestamp}`
+              img.includes('?') 
+                ? `${img.split('?')[0]}?t=${timestamp}`
+                : `${img}?t=${timestamp}`
             );
             const allImages = [cacheBustMain, ...cacheBustAdditional];
 
@@ -160,7 +163,7 @@ export default function PropertyGallery() {
                   loading="lazy"
                   quality={85}
                   unoptimized
-                  key={room.image}
+                  key={`${room.id}-${room.image}`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">

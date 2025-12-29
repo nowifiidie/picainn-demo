@@ -330,12 +330,20 @@ export async function POST(request: NextRequest) {
       sourceImageFound: !!finalSource,
       mainImageUrl: finalMain?.url,
       newMainResultUrl: newMainResult.url,
+      oldMainUrl: mainImage.url,
       urlsMatch: finalMain?.url === newMainResult.url,
+      // Note: URL may not change with Vercel Blob Storage when overwriting same path
+      // This is expected - the content changes but URL stays the same
+      urlChanged: finalMain?.url !== mainImage.url,
       allImages: finalImages.map(img => ({ filename: img.filename, isMain: img.isMain, isHidden: img.isHidden, url: img.url }))
     });
 
     // Use the verified main image URL (from Blob Storage listing, not from upload result)
     const verifiedMainUrl = finalMain?.url || newMainResult.url;
+    
+    // Note: With Vercel Blob Storage, the URL may not change when overwriting the same path
+    // This is normal behavior - the content is updated but the URL stays the same
+    // The frontend will use cache busting (timestamp) to force refresh
 
     return NextResponse.json({
       success: true,
@@ -351,7 +359,11 @@ export async function POST(request: NextRequest) {
         mainImageExists: !!finalMain,
         sourceImageExists: !!finalSource,
         mainImageUrl: verifiedMainUrl,
+        // URL may not change - that's okay, content is updated
         urlChanged: verifiedMainUrl !== mainImage.url,
+        note: verifiedMainUrl === mainImage.url 
+          ? 'URL unchanged (expected with Blob Storage overwrite) - content is updated, use cache busting'
+          : 'URL changed',
       },
     });
   } catch (error) {
