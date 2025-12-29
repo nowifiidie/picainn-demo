@@ -360,8 +360,9 @@ export default function AdminPage() {
       if (result.success) {
         console.log('Swap successful, refreshing images...', result);
         
-        // Wait for Blob Storage operations to complete and propagate
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Wait longer for Blob Storage operations to fully propagate
+        // Blob Storage list() operations may need time to reflect changes
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         // Show success message (only if there's an actual error)
         if (result.verification) {
@@ -376,9 +377,8 @@ export default function AdminPage() {
         }
         
         // Force a complete page refresh to ensure latest images are loaded
-        // This is necessary because Next.js Image component may cache the old image
-        // Even if URL doesn't change, the content is updated and cache busting will force refresh
-        window.location.reload();
+        // Add a cache-busting parameter to ensure fresh data is fetched
+        window.location.href = `/admin?refresh=${Date.now()}`;
       } else {
         const errorMsg = result.details 
           ? `${result.error}\n\n${result.details}`
@@ -503,10 +503,16 @@ export default function AdminPage() {
       const deletedRooms = await fetchDeletedRooms();
       const deletedRoomsSet = new Set(deletedRooms);
 
-      // Fetch rooms with images and metadata from API (with cache busting)
+      // Fetch rooms with images and metadata from API (with aggressive cache busting)
       // The API already filters deleted rooms and includes metadata from both Redis and static file
-      const response = await fetch(`/api/rooms?t=${Date.now()}`, {
+      // Use a unique timestamp to ensure we always get fresh data
+      const cacheBuster = Date.now() + Math.random();
+      const response = await fetch(`/api/rooms?t=${cacheBuster}`, {
         cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
       });
       const roomsData: { 
         roomId: string; 
@@ -575,11 +581,12 @@ export default function AdminPage() {
           }
 
           // Add cache busting to image URL to ensure fresh image after swaps
-          // Use current timestamp to force refresh after image swaps
-          const cacheBuster = Date.now();
+          // Use lastUpdated timestamp from metadata if available, otherwise use current timestamp
+          // This ensures the cache buster changes when the image is actually updated
+          const cacheBuster = metadata.lastUpdated || Date.now();
           const imageUrl = room.mainImage.includes('?') 
-            ? `${room.mainImage.split('?')[0]}?t=${cacheBuster}`
-            : `${room.mainImage}?t=${cacheBuster}`;
+            ? `${room.mainImage.split('?')[0]}?t=${cacheBuster}&v=${Date.now()}`
+            : `${room.mainImage}?t=${cacheBuster}&v=${Date.now()}`;
 
           return {
             roomId: room.roomId,
@@ -665,7 +672,18 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    fetchRooms();
+    // If we just reloaded after an image swap, wait a moment for Blob Storage to propagate
+    const urlParams = new URLSearchParams(window.location.search);
+    const isRefresh = urlParams.has('refresh');
+    
+    if (isRefresh) {
+      // Wait a bit longer to ensure Blob Storage has propagated
+      setTimeout(() => {
+        fetchRooms();
+      }, 1000);
+    } else {
+      fetchRooms();
+    }
     
     // Check for success message from room update
     const successMsg = sessionStorage.getItem('roomUpdateSuccess');
