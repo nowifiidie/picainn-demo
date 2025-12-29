@@ -3,7 +3,7 @@ import { writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { revalidatePath } from 'next/cache';
 import { Redis } from '@upstash/redis';
-import { uploadImageToBlob } from '@/lib/blob-storage';
+import { uploadImageToBlob, listRoomImages } from '@/lib/blob-storage';
 
 const ROOM_METADATA_KEY = 'room-metadata';
 
@@ -94,14 +94,29 @@ export async function POST(request: NextRequest) {
       // Handle new image uploads to Blob Storage
       const validImages = images.filter(img => img && img.size > 0 && img.type.startsWith('image/'));
       if (validImages.length > 0) {
+        // Get existing images to find the next available image number
+        const existingImages = await listRoomImages(roomId);
+        
+        // Find the highest image number (e.g., image-8.jpg -> 8)
+        let maxImageNumber = 0;
+        for (const img of existingImages) {
+          if (img.filename.startsWith('image-') && !img.isHidden) {
+            const match = img.filename.match(/^image-(\d+)\./);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (num > maxImageNumber) {
+                maxImageNumber = num;
+              }
+            }
+          }
+        }
+        
+        // Upload all new images as additional images (don't overwrite main.jpg)
+        // Start numbering from the next available number
         for (let i = 0; i < validImages.length; i++) {
           const image = validImages[i];
-          let filename: string;
-          if (i === 0) {
-            filename = 'main.jpg';
-          } else {
-            filename = `image-${i}.jpg`;
-          }
+          const imageNumber = maxImageNumber + i + 1;
+          const filename = `image-${imageNumber}.jpg`;
           
           try {
             const blobPath = `rooms/${roomId}/${filename}`;
@@ -109,10 +124,7 @@ export async function POST(request: NextRequest) {
               contentType: image.type,
             });
             
-            if (i === 0) {
-              allRooms[roomId].mainImageUrl = url;
-              await redis.set(ROOM_METADATA_KEY, allRooms);
-            }
+            console.log(`Uploaded new image as ${filename} for room ${roomId}`);
           } catch (blobError) {
             console.error(`Error uploading image ${filename} to Blob Storage:`, blobError);
             // Continue with other images even if one fails
@@ -248,7 +260,7 @@ export async function POST(request: NextRequest) {
       
       if (validImages.length > 0) {
         try {
-          const { mkdir } = await import('node:fs/promises');
+          const { mkdir, readdir } = await import('node:fs/promises');
           const roomDir = join(process.cwd(), 'public', 'images', 'rooms', roomId);
           await mkdir(roomDir, { recursive: true });
 
@@ -262,23 +274,39 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Save images: first as main.jpg, rest as image-1.jpg, image-2.jpg, etc.
+          // Get existing images to find the next available image number
+          let maxImageNumber = 0;
+          try {
+            const existingFiles = await readdir(roomDir);
+            for (const file of existingFiles) {
+              if (file.startsWith('image-') && file.endsWith('.jpg')) {
+                const match = file.match(/^image-(\d+)\.jpg$/);
+                if (match) {
+                  const num = parseInt(match[1], 10);
+                  if (num > maxImageNumber) {
+                    maxImageNumber = num;
+                  }
+                }
+              }
+            }
+          } catch (readError) {
+            // Directory might not exist or be empty, that's okay
+            console.log('Could not read existing images directory:', readError);
+          }
+
+          // Save all new images as additional images (don't overwrite main.jpg)
+          // Start numbering from the next available number
           for (let i = 0; i < validImages.length; i++) {
             const image = validImages[i];
             const bytes = await image.arrayBuffer();
             const buffer = Buffer.from(bytes);
             
-            let imagePath: string;
-            if (i === 0) {
-              // First image is main.jpg
-              imagePath = join(roomDir, 'main.jpg');
-            } else {
-              // Additional images are image-1.jpg, image-2.jpg, etc.
-              imagePath = join(roomDir, `image-${i}.jpg`);
-            }
+            const imageNumber = maxImageNumber + i + 1;
+            const imagePath = join(roomDir, `image-${imageNumber}.jpg`);
             
             try {
               await writeFile(imagePath, buffer);
+              console.log(`Saved new image as image-${imageNumber}.jpg for room ${roomId}`);
             } catch (writeError: any) {
               console.error(`Error saving image ${imagePath}:`, writeError);
               if (writeError.code === 'EROFS' || writeError.code === 'EACCES' || writeError.code === 'EPERM') {
