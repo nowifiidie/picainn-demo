@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { MessageCircle, Instagram, Facebook, X } from 'lucide-react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 export default function FloatingSocialDock() {
+  const t = useTranslations();
   const [showQRModal, setShowQRModal] = useState<{ type: 'line' | 'xhs' | null }>({ type: null });
 
   const socialLinks = [
@@ -107,7 +109,9 @@ export default function FloatingSocialDock() {
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-xl font-medium text-[#333333] mb-4 text-center">
-              Scan {showQRModal.type === 'line' ? 'LINE' : 'XiaoHongShu'} QR Code
+              {t('social.scanQRCode', { 
+                platform: showQRModal.type === 'line' ? t('social.line') : t('social.xiaohongshu') 
+              })}
             </h3>
             <div className="bg-gray-100 p-8 rounded-sm flex items-center justify-center mb-4">
               <div className="w-48 h-48 bg-gray-300 rounded-sm flex items-center justify-center text-gray-500">
@@ -115,7 +119,9 @@ export default function FloatingSocialDock() {
               </div>
             </div>
             <p className="text-sm text-gray-600 text-center">
-              Scan this code to connect with us on {showQRModal.type === 'line' ? 'LINE' : 'XiaoHongShu'}
+              {t('social.scanToConnect', { 
+                platform: showQRModal.type === 'line' ? t('social.line') : t('social.xiaohongshu') 
+              })}
             </p>
           </div>
         </div>

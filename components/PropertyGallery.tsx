@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import RoomDetailModal from './RoomDetailModal';
 import { getRoomMetadata } from '@/lib/rooms';
+import { useTranslations } from 'next-intl';
 
 interface Room {
   id: number;
@@ -45,6 +46,7 @@ interface RoomImages {
 }
 
 export default function PropertyGallery() {
+  const t = useTranslations();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -136,15 +138,15 @@ export default function PropertyGallery() {
       <section id="gallery" className="py-16 sm:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-light text-[#333333] mb-12 text-center">
-            Gallery
+            {t('gallery.title')}
           </h2>
           {isLoading ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">Loading rooms...</p>
+              <p className="text-gray-500">{t('gallery.loadingRooms')}</p>
             </div>
           ) : rooms.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">No rooms available at the moment.</p>
+              <p className="text-gray-500">{t('gallery.noRoomsAvailable')}</p>
             </div>
           ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -171,7 +173,7 @@ export default function PropertyGallery() {
                   />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <p className="text-gray-400 text-sm">No image</p>
+                    <p className="text-gray-400 text-sm">{t('gallery.noImage')}</p>
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0" />

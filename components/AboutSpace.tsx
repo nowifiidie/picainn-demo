@@ -1,57 +1,62 @@
+'use client';
+
 import { Shield, Home, Train, MapPin, Utensils, Users, Waves, Wifi, Languages } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function AboutSpace() {
+  const t = useTranslations();
+  
   const features = [
     {
       icon: MapPin,
-      title: 'Location',
-      description: '5 mins walk from Komagome Station (JR Yamanote Line & Namboku Subway). Reach Asakusa, Tokyo Skytree, Ginza, Meiji Jingu Shrine, and Imperial Palace in 20 minutes.',
+      title: t('aboutSpace.features.location.title'),
+      description: t('aboutSpace.features.location.description'),
     },
     {
       icon: Shield,
-      title: 'Safety',
-      description: 'Located in the safe city of Tokyo, the entire building is equipped with surveillance cameras for the safety of our guests.',
+      title: t('aboutSpace.features.safety.title'),
+      description: t('aboutSpace.features.safety.description'),
     },
     {
       icon: Wifi,
-      title: 'Free Pocket Wi-Fi',
-      description: 'Complimentary portable Wi-Fi device available for all guests during your stay.',
+      title: t('aboutSpace.features.wifi.title'),
+      description: t('aboutSpace.features.wifi.description'),
     },
     {
       icon: Languages,
-      title: 'Multilingual Support',
-      description: 'English, Chinese, and Korean language support available for your convenience.',
+      title: t('aboutSpace.features.multilingual.title'),
+      description: t('aboutSpace.features.multilingual.description'),
     },
     {
       icon: Waves,
-      title: 'Hot Springs',
-      description: 'Public bath 5 minutes on foot. Famous natural hot spring "Tokyo Shinjuku Onsen Sakura" near Sugamo Station (adjacent to Komagome Station).',
+      title: t('aboutSpace.features.hotSprings.title'),
+      description: t('aboutSpace.features.hotSprings.description'),
     },
     {
       icon: Home,
-      title: 'The Room',
-      description: 'Equipped with fridge, pots, TV, air conditioner, toilet, and shower room. Ideal for a group of 2.',
-      details: '1 double bed (140 cm x 200 cm) + 2 single futons (150 cm x 210 cm) + 2 pillows',
+      title: t('aboutSpace.features.theRoom.title'),
+      description: t('aboutSpace.features.theRoom.description'),
+      details: t('aboutSpace.features.theRoom.details'),
     },
     {
       icon: Train,
-      title: 'Transportation',
-      description: 'Easy access from Haneda and Narita airports. Elevators available at both south and east exits of Komagome Station. Our house has an elevator for easy luggage handling.',
+      title: t('aboutSpace.features.transportation.title'),
+      description: t('aboutSpace.features.transportation.description'),
     },
     {
       icon: MapPin,
-      title: 'Nearby Attractions',
-      description: 'Quiet residential area with shopping street within 2 minutes. Rikugien Park (5-min walk), University of Tokyo and Korakuen (20-min walk). Nearby dining: ramen, sushi, tempura, soba, takoyaki, yakitori, eel, yakiniku, and Japanese confectionery shops.',
+      title: t('aboutSpace.features.nearbyAttractions.title'),
+      description: t('aboutSpace.features.nearbyAttractions.description'),
     },
     {
       icon: Utensils,
-      title: 'Shopping & Convenience',
-      description: 'Shopping district near Komagome Station east exit: 24-hour convenience stores, supermarkets (open until 1 am), Doutor Coffee, drug stores, bento shops, ramen shops (open until 5 am), and bakeries at reasonable prices.',
+      title: t('aboutSpace.features.shopping.title'),
+      description: t('aboutSpace.features.shopping.description'),
     },
     {
       icon: Users,
-      title: 'Common Areas',
-      description: 'Ground floor common area equipped with washing machine and microwave.',
+      title: t('aboutSpace.features.commonAreas.title'),
+      description: t('aboutSpace.features.commonAreas.description'),
     },
   ];
 
@@ -59,7 +64,7 @@ export default function AboutSpace() {
     <section className="py-16 sm:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl sm:text-4xl font-light text-[#333333] mb-12 text-center">
-          About This Space
+          {t('aboutSpace.title')}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => {
@@ -95,19 +100,19 @@ export default function AboutSpace() {
 
         {/* House Rules - Separate card with border */}
         <div className="mt-8 bg-[#FAFAFA] p-6 rounded-sm border-l-4 border-[#8B7355]">
-          <h3 className="text-lg font-medium text-[#333333] mb-4">House Rules</h3>
+          <h3 className="text-lg font-medium text-[#333333] mb-4">{t('aboutSpace.houseRules.title')}</h3>
           <ul className="space-y-2 text-sm text-[#333333] font-light">
             <li className="flex items-start gap-2">
               <span className="text-[#8B7355] mt-1">•</span>
-              <span>Please keep clean, do not make noise, jump into the room, or affect other households, as Japanese people are very sensitive to sound and our area is especially quiet.</span>
+              <span>{t('aboutSpace.houseRules.rule1')}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[#8B7355] mt-1">•</span>
-              <span>When leaving the room, be sure to turn off the air conditioner, water, and gas to keep the room clean.</span>
+              <span>{t('aboutSpace.houseRules.rule2')}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[#8B7355] mt-1">•</span>
-              <span>To maintain your privacy and peace of mind, please only use Airbnb Message for communication.</span>
+              <span>{t('aboutSpace.houseRules.rule3')}</span>
             </li>
           </ul>
         </div>
@@ -115,7 +120,7 @@ export default function AboutSpace() {
         {/* Perfect For */}
         <div className="mt-6 text-center">
           <p className="text-base text-[#333333] font-light">
-            Great for couples, students, groups, and business travelers.
+            {t('aboutSpace.perfectFor')}
           </p>
         </div>
       </div>

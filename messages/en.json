@@ -6,7 +6,10 @@
     "inquiry": "Inquiry"
   },
   "gallery": {
-    "title": "Gallery"
+    "title": "Room",
+    "loadingRooms": "Loading rooms...",
+    "noRoomsAvailable": "No rooms available at the moment.",
+    "noImage": "No image"
   },
   "hero": {
     "title": "Welcome to Our Guest House",
@@ -47,7 +50,81 @@
     "title": "Nearby Favorites",
     "convenience": "Convenience Store",
     "coffee": "Coffee",
-    "izakaya": "Izakaya"
+    "izakaya": "Izakaya",
+    "viewOnGoogleMaps": "View on Google Maps"
+  },
+  "aboutSpace": {
+    "title": "About This Space",
+    "features": {
+      "location": {
+        "title": "Location",
+        "description": "5 mins walk from Komagome Station (JR Yamanote Line & Namboku Subway). Reach Asakusa, Tokyo Skytree, Ginza, Meiji Jingu Shrine, and Imperial Palace in 20 minutes."
+      },
+      "safety": {
+        "title": "Safety",
+        "description": "Located in the safe city of Tokyo, the entire building is equipped with surveillance cameras for the safety of our guests."
+      },
+      "wifi": {
+        "title": "Free Pocket Wi-Fi",
+        "description": "Complimentary portable Wi-Fi device available for all guests during your stay."
+      },
+      "multilingual": {
+        "title": "Multilingual Support",
+        "description": "English, Chinese, and Korean language support available for your convenience."
+      },
+      "hotSprings": {
+        "title": "Hot Springs",
+        "description": "Public bath 5 minutes on foot. Famous natural hot spring \"Tokyo Shinjuku Onsen Sakura\" near Sugamo Station (adjacent to Komagome Station)."
+      },
+      "theRoom": {
+        "title": "The Room",
+        "description": "Equipped with fridge, pots, TV, air conditioner, toilet, and shower room. Ideal for a group of 2.",
+        "details": "1 double bed (140 cm x 200 cm) + 2 single futons (150 cm x 210 cm) + 2 pillows"
+      },
+      "transportation": {
+        "title": "Transportation",
+        "description": "Easy access from Haneda and Narita airports. Elevators available at both south and east exits of Komagome Station. Our house has an elevator for easy luggage handling."
+      },
+      "nearbyAttractions": {
+        "title": "Nearby Attractions",
+        "description": "Quiet residential area with shopping street within 2 minutes. Rikugien Park (5-min walk), University of Tokyo and Korakuen (20-min walk). Nearby dining: ramen, sushi, tempura, soba, takoyaki, yakitori, eel, yakiniku, and Japanese confectionery shops."
+      },
+      "shopping": {
+        "title": "Shopping & Convenience",
+        "description": "Shopping district near Komagome Station east exit: 24-hour convenience stores, supermarkets (open until 1 am), Doutor Coffee, drug stores, bento shops, ramen shops (open until 5 am), and bakeries at reasonable prices."
+      },
+      "commonAreas": {
+        "title": "Common Areas",
+        "description": "Ground floor common area equipped with washing machine and microwave."
+      }
+    },
+    "houseRules": {
+      "title": "House Rules",
+      "rule1": "Please keep clean, do not make noise, jump into the room, or affect other households, as Japanese people are very sensitive to sound and our area is especially quiet.",
+      "rule2": "When leaving the room, be sure to turn off the air conditioner, water, and gas to keep the room clean.",
+      "rule3": "To maintain your privacy and peace of mind, please only use Airbnb Message for communication."
+    },
+    "perfectFor": "Great for couples, students, groups, and business travelers."
+  },
+  "roomDetail": {
+    "maxGuests": "Max Guests",
+    "bedding": "Bedding",
+    "included": "Included",
+    "roomSize": "Room Size",
+    "bedAndBedding": "Bed & Bedding",
+    "amenities": "Amenities",
+    "location": "Location",
+    "bookThisRoom": "Book This Room",
+    "closeRoomDetails": "Close room details",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "goToImage": "Go to image"
+  },
+  "social": {
+    "scanQRCode": "Scan {platform} QR Code",
+    "scanToConnect": "Scan this code to connect with us on {platform}",
+    "line": "LINE",
+    "xiaohongshu": "XiaoHongShu"
   },
   "footer": {
     "license": "Residential Accommodation Business Act License No.",
