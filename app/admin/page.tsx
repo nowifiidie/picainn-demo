@@ -87,6 +87,92 @@ export default function AdminPage() {
   const [roomOrder, setRoomOrder] = useState<string[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  // Language code mapping for MyMemory Translation API
+  const LANGUAGE_CODES: Record<string, string> = {
+    'en': 'en',
+    'zh': 'zh-CN', // Simplified Chinese
+    'zh-TW': 'zh-TW', // Traditional Chinese
+    'ko': 'ko',
+    'th': 'th',
+    'es': 'es',
+    'fr': 'fr',
+    'id': 'id',
+    'ar': 'ar',
+    'de': 'de',
+    'vi': 'vi',
+    'my': 'my', // Myanmar
+  };
+
+  // Translate text using MyMemory Translation API
+  async function translateText(text: string, targetLang: string): Promise<string> {
+    try {
+      const langCode = LANGUAGE_CODES[targetLang] || targetLang;
+      
+      // MyMemory Translation API - free tier: 10,000 words/day
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${langCode}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Translation API returned ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
+        return data.responseData.translatedText;
+      } else {
+        console.error(`Translation failed for ${targetLang}:`, data);
+        return text; // Fallback to original text
+      }
+    } catch (error) {
+      console.error(`Error translating to ${targetLang}:`, error);
+      return text; // Fallback to original text
+    }
+  }
+
+  // Translate description to all languages and fill form fields
+  async function handleTranslateDescription(formId: 'edit' | 'add', englishDescription: string) {
+    if (!englishDescription || englishDescription.trim() === '') {
+      alert('Please enter an English description first');
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const languages = ['en', 'zh', 'zh-TW', 'ko', 'th', 'es', 'fr', 'id', 'ar', 'de', 'vi', 'my'];
+      
+      // Translate to all languages in parallel (English stays as-is)
+      const translationPromises = languages.map(async (lang) => {
+        if (lang === 'en') {
+          return { lang, translated: englishDescription };
+        }
+        const translated = await translateText(englishDescription, lang);
+        return { lang, translated };
+      });
+
+      const results = await Promise.all(translationPromises);
+      
+      // Fill in all the textarea fields
+      results.forEach(({ lang, translated }) => {
+        const textareaId = formId === 'edit' 
+          ? `edit-description-${lang}` 
+          : `room-description-${lang}`;
+        const textarea = document.getElementById(textareaId) as HTMLTextAreaElement;
+        if (textarea) {
+          textarea.value = translated;
+        }
+      });
+
+      alert('Translations completed! Review and adjust if needed.');
+    } catch (error) {
+      console.error('Error translating descriptions:', error);
+      alert('Translation failed. Please try again or translate manually.');
+    } finally {
+      setIsTranslating(false);
+    }
+  }
 
   async function handleHeroSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -1178,14 +1264,29 @@ export default function AdminPage() {
                   <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
                     Description (Fallback - for backward compatibility) *
                   </label>
-                  <textarea
-                    id="edit-description"
-                    name="description"
-                    defaultValue={editingRoom.description}
-                    required
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                  />
+                  <div className="flex gap-2">
+                    <textarea
+                      id="edit-description"
+                      name="description"
+                      defaultValue={editingRoom.description}
+                      required
+                      rows={3}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.getElementById('edit-description') as HTMLTextAreaElement;
+                        const englishDesc = textarea?.value || editingRoom.description;
+                        handleTranslateDescription('edit', englishDesc);
+                      }}
+                      disabled={isTranslating}
+                      className="px-4 py-2 bg-[#8B7355] text-white rounded-sm hover:bg-[#6B5A42] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm"
+                      title="Auto-translate English description to all languages"
+                    >
+                      {isTranslating ? 'Translating...' : '🌐 Translate'}
+                    </button>
+                  </div>
                   <p className="mt-1 text-xs text-gray-500">This is used as a fallback if translations are missing</p>
                 </div>
 
@@ -1622,14 +1723,29 @@ export default function AdminPage() {
               <label htmlFor="room-description" className="block text-sm font-medium text-gray-700 mb-2">
                 Description (Fallback - for backward compatibility) *
               </label>
-              <textarea
-                id="room-description"
-                name="description"
-                required
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                placeholder="Describe the room (fallback)..."
-              />
+              <div className="flex gap-2">
+                <textarea
+                  id="room-description"
+                  name="description"
+                  required
+                  rows={3}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
+                  placeholder="Describe the room (fallback)..."
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const textarea = document.getElementById('room-description') as HTMLTextAreaElement;
+                    const englishDesc = textarea?.value || '';
+                    handleTranslateDescription('add', englishDesc);
+                  }}
+                  disabled={isTranslating}
+                  className="px-4 py-2 bg-[#8B7355] text-white rounded-sm hover:bg-[#6B5A42] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm"
+                  title="Auto-translate English description to all languages"
+                >
+                  {isTranslating ? 'Translating...' : '🌐 Translate'}
+                </button>
+              </div>
               <p className="mt-1 text-xs text-gray-500">This is used as a fallback if translations are missing</p>
             </div>
 
