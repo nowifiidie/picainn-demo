@@ -8,33 +8,64 @@ import { useEffect, useState } from 'react';
 export default function Hero() {
   const t = useTranslations();
   const [heroImageUrl, setHeroImageUrl] = useState<string>('/images/hero/hero-background.jpg');
+  const [lastTimestamp, setLastTimestamp] = useState<number>(0);
 
   useEffect(() => {
-    // Fetch hero image URL from API
-    fetch('/api/cms/hero-image')
-      .then(res => res.json())
-      .then(data => {
+    // Fetch hero image URL from API with cache busting
+    const fetchHeroImage = async () => {
+      try {
+        const response = await fetch(`/api/cms/hero-image?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+          }
+        });
+        const data = await response.json();
         if (data.url) {
           setHeroImageUrl(data.url);
+          if (data.timestamp) {
+            setLastTimestamp(data.timestamp);
+          }
         }
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Error fetching hero image URL:', error);
         // Keep default fallback URL
-      });
-  }, []);
+      }
+    };
+
+    fetchHeroImage();
+    
+    // Refresh when page becomes visible again (user switches back to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchHeroImage();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []); // Only run on mount and visibility change
 
   const scrollToInquiry = () => {
     const element = document.getElementById('inquiry');
     element?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Add cache-busting query parameter to image URL
+  const imageUrlWithCacheBust = heroImageUrl.startsWith('http') 
+    ? `${heroImageUrl}${heroImageUrl.includes('?') ? '&' : '?'}t=${lastTimestamp || Date.now()}`
+    : heroImageUrl;
+
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900/70 to-gray-800/50 z-0">
         <Image
-          src={heroImageUrl}
+          key={lastTimestamp} // Force re-render when timestamp changes
+          src={imageUrlWithCacheBust}
           alt="Japanese Guest House"
           fill
           priority
