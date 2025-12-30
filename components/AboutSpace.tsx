@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 export default function AboutSpace() {
   const t = useTranslations();
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [showNearbyAttractionsModal, setShowNearbyAttractionsModal] = useState(false);
+  const [showShoppingModal, setShowShoppingModal] = useState(false);
   
   // Property location extracted from your Google Maps link
   const komagomeStation = 'Komagome Station, 2-chōme-1 Komagome, Toshima City, Tokyo 170-0003';
@@ -21,12 +21,12 @@ export default function AboutSpace() {
   // Google Maps directions link (your original link)
   const directionsLink = `https://www.google.com/maps/dir/Komagome+Station,+2-ch%C5%8Dme-1+Komagome,+Toshima+City,+Tokyo+170-0003/5+Chome-55-3+Honkomagome,+Bunkyo+City,+Tokyo/@35.7361674,139.7470783,17z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x60188d969bd7335f:0xc93afd70355008c3!2m2!1d139.7470098!2d35.7365665!1m5!1m1!1s0x60188dbffa5bf1b5:0xfb4fef01b46a5aa4!2m2!1d139.7519715!2d35.7349141!3e3?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoKLDEwMDc5MjA3MUgBUAM%3D`;
   
-  // Nearby Attractions - Google Maps search for convenience stores and nearby attractions
+  // Shopping & Convenience - Google Maps search for convenience stores and shopping
   // Using coordinates from your search link: 35.7365063, 139.7468308
-  const nearbyAttractionsMapUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3240.488!2d139.7468308!3d35.7365063!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188d969bd7335f%3A0xc93afd70355008c3!2sKomagome%20Station!5e0!3m2!1sen!2sus!4v1234567890!5m2!1sen!2sus`;
+  const shoppingMapUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3240.488!2d139.7468308!3d35.7365063!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188d969bd7335f%3A0xc93afd70355008c3!2sKomagome%20Station!5e0!3m2!1sen!2sus!4v1234567890!5m2!1sen!2sus`;
   
-  // Google Maps search link for nearby attractions (convenience stores, restaurants, etc.)
-  const nearbyAttractionsLink = `https://www.google.com/maps/search/convenience+store/@35.7365063,139.7468308,16z/data=!3m1!4b1?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoKLDEwMDc5MjA3MUgBUAM%3D`;
+  // Google Maps search link for shopping and convenience stores
+  const shoppingLink = `https://www.google.com/maps/search/convenience+store/@35.7365063,139.7468308,16z/data=!3m1!4b1?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoKLDEwMDc5MjA3MUgBUAM%3D`;
   
   const features = [
     {
@@ -93,13 +93,13 @@ export default function AboutSpace() {
             const Icon = feature.icon;
             const isLastCard = index === features.length - 1;
             const isLocationCard = feature.title === t('aboutSpace.features.location.title');
-            const isNearbyAttractionsCard = feature.title === t('aboutSpace.features.nearbyAttractions.title');
-            const isClickable = isLocationCard || isNearbyAttractionsCard;
+            const isShoppingCard = feature.title === t('aboutSpace.features.shopping.title');
+            const isClickable = isLocationCard || isShoppingCard;
             
             return (
               <div
                 key={index}
-                onClick={isLocationCard ? () => setShowLocationModal(true) : isNearbyAttractionsCard ? () => setShowNearbyAttractionsModal(true) : undefined}
+                onClick={isLocationCard ? () => setShowLocationModal(true) : isShoppingCard ? () => setShowShoppingModal(true) : undefined}
                 className={`text-center p-6 bg-[#FAFAFA] rounded-sm shadow-sm hover:shadow-md transition-shadow ${
                   isLastCard ? 'sm:col-start-1 sm:col-end-3 lg:col-start-2 lg:col-end-3' : ''
                 } ${
@@ -203,11 +203,11 @@ export default function AboutSpace() {
           </div>
         )}
 
-        {/* Nearby Attractions Modal */}
-        {showNearbyAttractionsModal && (
+        {/* Shopping & Convenience Modal */}
+        {showShoppingModal && (
           <div 
             className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowNearbyAttractionsModal(false)}
+            onClick={() => setShowShoppingModal(false)}
           >
             <div 
               className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
@@ -216,13 +216,13 @@ export default function AboutSpace() {
               {/* Modal Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-6 h-6 text-[#8B7355]" />
+                  <Utensils className="w-6 h-6 text-[#8B7355]" />
                   <h3 className="text-2xl font-light text-[#333333]">
-                    {t('aboutSpace.features.nearbyAttractions.title')}
+                    {t('aboutSpace.features.shopping.title')}
                   </h3>
                 </div>
                 <button
-                  onClick={() => setShowNearbyAttractionsModal(false)}
+                  onClick={() => setShowShoppingModal(false)}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   aria-label="Close modal"
                 >
@@ -234,17 +234,17 @@ export default function AboutSpace() {
               <div className="flex-1 overflow-hidden flex flex-col">
                 <div className="p-6 border-b border-gray-200 bg-gray-50">
                   <p className="text-sm text-gray-700">
-                    <span className="font-medium">Area:</span> Near Komagome Station, Bunkyo City, Tokyo
+                    <span className="font-medium">Location:</span> Shopping district near Komagome Station east exit
                   </p>
                   <p className="text-xs text-gray-600 mt-2">
-                    Explore convenience stores, restaurants, parks, and attractions in the area
+                    24-hour convenience stores, supermarkets, coffee shops, drug stores, bento shops, ramen shops, and bakeries
                   </p>
                 </div>
                 
                 {/* Google Maps Embed */}
                 <div className="flex-1 relative min-h-[400px]">
                   <iframe
-                    src={nearbyAttractionsMapUrl}
+                    src={shoppingMapUrl}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
@@ -252,19 +252,19 @@ export default function AboutSpace() {
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                     className="absolute inset-0 w-full h-full"
-                    title="Map showing nearby attractions near Komagome Station"
+                    title="Map showing shopping and convenience stores near Komagome Station"
                   />
                 </div>
 
                 {/* Search Button */}
                 <div className="p-4 border-t border-gray-200 bg-gray-50">
                   <a
-                    href={nearbyAttractionsLink}
+                    href={shoppingLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-6 py-2 bg-[#8B7355] text-white rounded-sm hover:bg-[#6B5A42] transition-colors text-sm"
                   >
-                    <span>Search Nearby Attractions on Google Maps</span>
+                    <span>Search Shopping & Convenience Stores on Google Maps</span>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
