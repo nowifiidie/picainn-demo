@@ -113,7 +113,7 @@ export default function AdminPage() {
   }
 
   async function handleDeleteHero() {
-    if (!confirm('Are you sure you want to delete the hero image? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to delete the hero image? This action cannot be undone.')) {
       return;
     }
 
@@ -121,8 +121,18 @@ export default function AdminPage() {
     setHeroStatus(null);
 
     try {
+      // Get the current hero image URL from state or localStorage
+      const urlToDelete = heroImageUrl.startsWith('http') 
+        ? heroImageUrl 
+        : localStorage.getItem('heroImageUrl');
+      
+      // Pass the URL to the delete API
       const response = await fetch('/api/cms/delete-hero', {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: urlToDelete }),
       });
       const result = await response.json();
 
@@ -130,6 +140,12 @@ export default function AdminPage() {
       
       if (result.success) {
         setHeroImageExists(false);
+        setHeroImageUrl('/images/hero/hero-background.jpg'); // Reset to fallback
+        // Clear localStorage
+        localStorage.removeItem('heroImageUrl');
+        localStorage.removeItem('heroImageTimestamp');
+        // Trigger event to update homepage
+        window.dispatchEvent(new CustomEvent('heroImageUpdated', { detail: { url: null } }));
       }
     } catch (error) {
       setHeroStatus({

@@ -6,13 +6,26 @@ import { deleteImageFromBlob } from '@/lib/blob-storage';
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Get hero image URL from config
-    const configPath = join(process.cwd(), 'lib', 'rooms.ts');
-    const configContent = await readFile(configPath, 'utf-8');
-    const heroImageUrlMatch = configContent.match(/heroImageUrl:\s*['"]([^'"]+)['"]/);
-    const heroImageUrl = heroImageUrlMatch ? heroImageUrlMatch[1] : null;
+    // Try to get URL from request body first (from admin page)
+    let heroImageUrl: string | null = null;
+    try {
+      const body = await request.json();
+      if (body.url && typeof body.url === 'string') {
+        heroImageUrl = body.url;
+      }
+    } catch {
+      // Request body might be empty, continue to check config file
+    }
 
+    // If not in request body, get from config file
     if (!heroImageUrl) {
+      const configPath = join(process.cwd(), 'lib', 'rooms.ts');
+      const configContent = await readFile(configPath, 'utf-8');
+      const heroImageUrlMatch = configContent.match(/heroImageUrl:\s*['"]([^'"]+)['"]/);
+      heroImageUrl = heroImageUrlMatch ? heroImageUrlMatch[1] : null;
+    }
+
+    if (!heroImageUrl || heroImageUrl.startsWith('/images/hero/')) {
       return NextResponse.json(
         { success: false, error: 'Hero image does not exist' },
         { status: 404 }
