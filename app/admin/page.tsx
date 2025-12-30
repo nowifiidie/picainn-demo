@@ -88,12 +88,16 @@ export default function AdminPage() {
         if (result.url) {
           console.log('Hero image uploaded, new URL:', result.url);
           setHeroImageUrl(result.url);
-          // Force a page refresh on the homepage to show new image
-          // This is a workaround until the config file update propagates
-          setTimeout(() => {
-            // Trigger a custom event that the Hero component can listen to
-            window.dispatchEvent(new CustomEvent('heroImageUpdated', { detail: { url: result.url } }));
-          }, 500);
+          // Store in localStorage so homepage can pick it up even in different tabs
+          localStorage.setItem('heroImageUrl', result.url);
+          localStorage.setItem('heroImageTimestamp', Date.now().toString());
+          // Trigger a custom event that the Hero component can listen to
+          window.dispatchEvent(new CustomEvent('heroImageUpdated', { detail: { url: result.url } }));
+          // Also trigger storage event for cross-tab communication
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'heroImageUrl',
+            newValue: result.url
+          }));
         }
       }
     } catch (error) {

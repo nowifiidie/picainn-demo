@@ -11,6 +11,19 @@ export default function Hero() {
   const [lastTimestamp, setLastTimestamp] = useState<number>(0);
 
   useEffect(() => {
+    // Check localStorage first (in case image was just uploaded)
+    const storedUrl = localStorage.getItem('heroImageUrl');
+    const storedTimestamp = localStorage.getItem('heroImageTimestamp');
+    if (storedUrl && storedTimestamp) {
+      const timestamp = parseInt(storedTimestamp);
+      // Use stored URL if it's recent (within last hour)
+      if (Date.now() - timestamp < 3600000) {
+        console.log('Using stored hero image URL:', storedUrl);
+        setHeroImageUrl(storedUrl);
+        setLastTimestamp(timestamp);
+      }
+    }
+
     // Fetch hero image URL from API with cache busting
     const fetchHeroImage = async () => {
       try {
@@ -23,10 +36,13 @@ export default function Hero() {
         const data = await response.json();
         console.log('Hero image API response:', data);
         if (data.url) {
-          console.log('Setting hero image URL to:', data.url);
-          setHeroImageUrl(data.url);
-          if (data.timestamp) {
-            setLastTimestamp(data.timestamp);
+          // Only use API URL if it's not the fallback static path, or if we don't have a stored URL
+          if (!storedUrl || !data.url.startsWith('/images/hero/')) {
+            console.log('Setting hero image URL to:', data.url);
+            setHeroImageUrl(data.url);
+            if (data.timestamp) {
+              setLastTimestamp(data.timestamp);
+            }
           }
         }
       } catch (error) {
@@ -38,26 +54,44 @@ export default function Hero() {
     fetchHeroImage();
     
     // Listen for hero image update events from admin page
-    const handleHeroImageUpdate = (event: CustomEvent) => {
-      if (event.detail?.url) {
-        console.log('Hero image update event received:', event.detail.url);
-        setHeroImageUrl(event.detail.url);
-        setLastTimestamp(Date.now());
+    const handleHeroImageUpdate = (event: CustomEvent | StorageEvent) => {
+      const url = (event as CustomEvent).detail?.url || (event as StorageEvent).newValue;
+      if (url) {
+        console.log('Hero image update event received:', url);
+        setHeroImageUrl(url);
+        const timestamp = Date.now();
+        setLastTimestamp(timestamp);
+        localStorage.setItem('heroImageUrl', url);
+        localStorage.setItem('heroImageTimestamp', timestamp.toString());
+      }
+    };
+    
+    // Listen for storage events (cross-tab communication)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'heroImageUrl' && e.newValue) {
+        handleHeroImageUpdate(e);
       }
     };
     
     // Refresh when page becomes visible again (user switches back to tab)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
+        // Check localStorage again when tab becomes visible
+        const recentUrl = localStorage.getItem('heroImageUrl');
+        if (recentUrl) {
+          setHeroImageUrl(recentUrl);
+        }
         fetchHeroImage();
       }
     };
     
     window.addEventListener('heroImageUpdated', handleHeroImageUpdate as EventListener);
+    window.addEventListener('storage', handleStorageChange);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       window.removeEventListener('heroImageUpdated', handleHeroImageUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []); // Only run on mount and visibility change
