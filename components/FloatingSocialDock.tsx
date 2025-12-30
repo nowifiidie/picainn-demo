@@ -7,7 +7,14 @@ import { useTranslations } from 'next-intl';
 
 export default function FloatingSocialDock() {
   const t = useTranslations();
-  const [showQRModal, setShowQRModal] = useState<{ type: 'line' | 'xhs' | null }>({ type: null });
+  const [showQRModal, setShowQRModal] = useState<{ type: 'line' | 'xhs' | 'wechat' | null }>({ type: null });
+
+  // QR Code image paths
+  const qrCodeImages = {
+    line: '/images/qr/line-qr.png',
+    xhs: '/images/qr/xiaohongshu-qr.png',
+    wechat: '/images/qr/wechat-qr.png',
+  };
 
   const socialLinks = [
     {
@@ -40,6 +47,12 @@ export default function FloatingSocialDock() {
       onClick: () => setShowQRModal({ type: 'xhs' }),
       color: 'text-red-500',
     },
+    {
+      name: 'WeChat',
+      icon: MessageCircle,
+      onClick: () => setShowQRModal({ type: 'wechat' }),
+      color: 'text-green-600',
+    },
   ];
 
   return (
@@ -61,6 +74,8 @@ export default function FloatingSocialDock() {
             <a
               key={index}
               href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
               className={`p-3 ${link.color} hover:bg-gray-50 rounded-md transition-colors`}
               title={link.name}
             >
@@ -88,6 +103,8 @@ export default function FloatingSocialDock() {
               <a
                 key={index}
                 href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`p-3 ${link.color} rounded-md transition-colors`}
                 title={link.name}
               >
@@ -110,17 +127,45 @@ export default function FloatingSocialDock() {
             </button>
             <h3 className="text-xl font-medium text-[#333333] mb-4 text-center">
               {t('social.scanQRCode', { 
-                platform: showQRModal.type === 'line' ? t('social.line') : t('social.xiaohongshu') 
+                platform: showQRModal.type === 'line' 
+                  ? t('social.line') 
+                  : showQRModal.type === 'wechat'
+                  ? t('social.wechat')
+                  : t('social.xiaohongshu') 
               })}
             </h3>
             <div className="bg-gray-100 p-8 rounded-sm flex items-center justify-center mb-4">
-              <div className="w-48 h-48 bg-gray-300 rounded-sm flex items-center justify-center text-gray-500">
-                QR Code Placeholder
-              </div>
+              {showQRModal.type && (
+                <Image
+                  src={qrCodeImages[showQRModal.type]}
+                  alt={`${showQRModal.type} QR Code`}
+                  width={192}
+                  height={192}
+                  className="rounded-sm"
+                  unoptimized
+                  onError={(e) => {
+                    console.error(`Failed to load QR code image: ${qrCodeImages[showQRModal.type!]}`);
+                    // Fallback: show placeholder text if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent && !parent.querySelector('.qr-placeholder')) {
+                      const placeholder = document.createElement('div');
+                      placeholder.className = 'qr-placeholder w-48 h-48 bg-gray-300 rounded-sm flex items-center justify-center text-gray-500 text-sm';
+                      placeholder.textContent = 'QR Code Image Not Found';
+                      parent.appendChild(placeholder);
+                    }
+                  }}
+                />
+              )}
             </div>
             <p className="text-sm text-gray-600 text-center">
               {t('social.scanToConnect', { 
-                platform: showQRModal.type === 'line' ? t('social.line') : t('social.xiaohongshu') 
+                platform: showQRModal.type === 'line' 
+                  ? t('social.line') 
+                  : showQRModal.type === 'wechat'
+                  ? t('social.wechat')
+                  : t('social.xiaohongshu') 
               })}
             </p>
           </div>

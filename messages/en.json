@@ -124,6 +124,7 @@
     "scanQRCode": "Scan {platform} QR Code",
     "scanToConnect": "Scan this code to connect with us on {platform}",
     "line": "LINE",
+    "wechat": "WeChat",
     "xiaohongshu": "XiaoHongShu"
   },
   "footer": {

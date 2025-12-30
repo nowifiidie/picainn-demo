@@ -124,6 +124,7 @@
     "scanQRCode": "掃描{platform}二維碼",
     "scanToConnect": "掃描此代碼以在{platform}上與我們聯繫",
     "line": "LINE",
+    "wechat": "微信",
     "xiaohongshu": "小紅書"
   },
   "footer": {
