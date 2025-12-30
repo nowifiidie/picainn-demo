@@ -679,6 +679,20 @@ export default function AdminPage() {
           name: string;
           type: string;
           description: string;
+          descriptionI18n?: {
+            en?: string;
+            zh?: string;
+            'zh-TW'?: string;
+            ko?: string;
+            th?: string;
+            es?: string;
+            fr?: string;
+            id?: string;
+            ar?: string;
+            de?: string;
+            vi?: string;
+            my?: string;
+          };
           amenities: string[];
           bedInfo: string;
           maxGuests: number;
