@@ -161,15 +161,15 @@ export default function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900/70 to-gray-800/50 z-0">
         {!imageError && (
-          <Image
+        <Image
             key={`${heroImageUrl}-${lastTimestamp}`} // Force re-render when URL or timestamp changes
             src={imageUrlWithCacheBust}
-            alt="Japanese Guest House"
-            fill
-            priority
-            quality={90}
-            className="object-cover opacity-40"
-            sizes="100vw"
+          alt="Japanese Guest House"
+          fill
+          priority
+          quality={90}
+          className="object-cover opacity-40"
+          sizes="100vw"
             unoptimized={heroImageUrl.startsWith('http')} // Don't optimize external URLs
             onError={() => {
               console.error('Hero image failed to load:', imageUrlWithCacheBust);

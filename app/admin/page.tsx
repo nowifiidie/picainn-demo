@@ -978,12 +978,40 @@ export default function AdminPage() {
         <section className="bg-white rounded-lg shadow-sm p-8 mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-light text-gray-900">Current Rooms</h2>
-            <button
-              onClick={fetchRooms}
-              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-sm font-medium hover:bg-gray-200 transition-colors"
-            >
-              Refresh
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  if (confirm('This will automatically translate all room descriptions into 12 languages. Rooms that already have translations will be skipped unless you choose to overwrite. Continue?')) {
+                    try {
+                      const response = await fetch('/api/cms/auto-translate-rooms', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ overwrite: false, dryRun: false }),
+                      });
+                      const result = await response.json();
+                      if (result.success) {
+                        alert(`✅ Success! Translated ${result.summary.translated} rooms. Skipped ${result.summary.skipped}. Errors: ${result.summary.errors}\n\nPlease refresh to see the updates.`);
+                        await fetchRooms();
+                      } else {
+                        alert(`❌ Error: ${result.error || 'Failed to translate rooms'}`);
+                      }
+                    } catch (error) {
+                      alert(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    }
+                  }
+                }}
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-sm font-medium hover:bg-blue-700 transition-colors"
+                title="Auto-translate all room descriptions into 12 languages"
+              >
+                🌐 Auto-Translate All Rooms
+              </button>
+              <button
+                onClick={fetchRooms}
+                className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
           </div>
           <p className="text-sm text-gray-500 mb-6 min-h-[1.5rem]">
             💡 Drag and drop room cards to reorder them. The order will be reflected on the home page.
