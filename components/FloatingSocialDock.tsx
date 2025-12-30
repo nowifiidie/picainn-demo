@@ -87,18 +87,20 @@ export default function FloatingSocialDock() {
                 title={link.name}
               >
                 {hasLogo ? (
-                  <Image
-                    src={hasLogo}
-                    alt={link.name}
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 object-contain"
-                    unoptimized
-                    priority={index < 2}
-                    onError={(e) => {
-                      console.error(`Failed to load logo: ${hasLogo}`);
-                    }}
-                  />
+                  <div className="bg-white rounded p-1">
+                    <Image
+                      src={hasLogo}
+                      alt={link.name}
+                      width={24}
+                      height={24}
+                      className="w-6 h-6 object-contain"
+                      unoptimized
+                      priority={index < 2}
+                      onError={(e) => {
+                        console.error(`Failed to load logo: ${hasLogo}`);
+                      }}
+                    />
+                  </div>
                 ) : (
                   Icon && <Icon className="w-5 h-5" />
                 )}
@@ -115,18 +117,20 @@ export default function FloatingSocialDock() {
                 title={link.name}
               >
                 {hasLogo ? (
-                  <Image
-                    src={hasLogo}
-                    alt={link.name}
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 object-contain"
-                    unoptimized
-                    priority={index < 2}
-                    onError={(e) => {
-                      console.error(`Failed to load logo: ${hasLogo}`);
-                    }}
-                  />
+                  <div className="bg-white rounded p-1">
+                    <Image
+                      src={hasLogo}
+                      alt={link.name}
+                      width={24}
+                      height={24}
+                      className="w-6 h-6 object-contain"
+                      unoptimized
+                      priority={index < 2}
+                      onError={(e) => {
+                        console.error(`Failed to load logo: ${hasLogo}`);
+                      }}
+                    />
+                  </div>
                 ) : (
                   Icon && <Icon className="w-5 h-5" />
                 )}
