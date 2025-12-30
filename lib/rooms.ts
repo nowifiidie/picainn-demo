@@ -20,6 +20,7 @@ export interface RoomMetadata {
 
 export interface CMSConfig {
   heroLastUpdated?: number;
+  heroImageUrl?: string; // URL of hero image in blob storage
   roomsLastUpdated?: number;
 }
 

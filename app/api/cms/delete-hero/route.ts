@@ -1,26 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { unlink, access, constants } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { revalidatePath } from 'next/cache';
+import { deleteImageFromBlob } from '@/lib/blob-storage';
 
 export async function DELETE(request: NextRequest) {
   try {
-    const filePath = join(process.cwd(), 'public', 'images', 'hero', 'hero-background.jpg');
+    // Get hero image URL from config
+    const configPath = join(process.cwd(), 'lib', 'rooms.ts');
+    const configContent = await readFile(configPath, 'utf-8');
+    const heroImageUrlMatch = configContent.match(/heroImageUrl:\s*['"]([^'"]+)['"]/);
+    const heroImageUrl = heroImageUrlMatch ? heroImageUrlMatch[1] : null;
 
-    // Check if file exists
-    try {
-      await access(filePath, constants.F_OK);
-    } catch {
+    if (!heroImageUrl) {
       return NextResponse.json(
         { success: false, error: 'Hero image does not exist' },
         { status: 404 }
       );
     }
 
-    // Delete the file
-    await unlink(filePath);
+    // Delete from R2 blob storage
+    try {
+      await deleteImageFromBlob(heroImageUrl);
+    } catch (error) {
+      console.warn('Error deleting hero image from blob storage:', error);
+      // Continue to update config even if deletion fails
+    }
 
-    // Update CMS config timestamp
+    // Update CMS config to remove heroImageUrl
     await updateCMSConfig('hero');
 
     // Revalidate the home page for all locales
@@ -43,7 +50,6 @@ export async function DELETE(request: NextRequest) {
 
 async function updateCMSConfig(type: 'hero' | 'rooms') {
   try {
-    const { readFile, writeFile } = await import('node:fs/promises');
     const configPath = join(process.cwd(), 'lib', 'rooms.ts');
     const configContent = await readFile(configPath, 'utf-8');
     const timestamp = Date.now();
@@ -57,9 +63,15 @@ async function updateCMSConfig(type: 'hero' | 'rooms') {
     if (match) {
       let configBody = match[1];
       
-      // Remove ALL occurrences of the property we're updating (to handle duplicates)
+      // Remove ALL occurrences of properties we're updating (to handle duplicates)
       const propertyPattern = new RegExp(`\\s*${propertyName}:\\s*\\d+[,\\n]*`, 'g');
       configBody = configBody.replace(propertyPattern, '');
+      
+      // Remove heroImageUrl if deleting hero
+      if (type === 'hero') {
+        const heroImageUrlPattern = /\s*heroImageUrl:\s*['"][^'"]+['"][,\n]*/g;
+        configBody = configBody.replace(heroImageUrlPattern, '');
+      }
       
       // Also remove the other property if it exists (to rebuild cleanly)
       const otherPropertyName = type === 'hero' ? 'roomsLastUpdated' : 'heroLastUpdated';
@@ -71,13 +83,25 @@ async function updateCMSConfig(type: 'hero' | 'rooms') {
         configBody = configBody.replace(otherPropertyPattern, '');
       }
       
+      // Get existing heroImageUrl if not deleting hero
+      let existingHeroImageUrl = '';
+      if (type !== 'hero') {
+        const heroImageUrlMatch = configBody.match(/heroImageUrl:\s*['"]([^'"]+)['"]/);
+        if (heroImageUrlMatch) {
+          existingHeroImageUrl = heroImageUrlMatch[0];
+          const heroImageUrlPattern = /\s*heroImageUrl:\s*['"][^'"]+['"][,\n]*/g;
+          configBody = configBody.replace(heroImageUrlPattern, '');
+        }
+      }
+      
       // Clean up extra commas and whitespace
       configBody = configBody.trim().replace(/^,|,$/g, '').trim();
       
-      // Build new config body with both properties
+      // Build new config body with all properties
       const properties = [];
       if (type === 'hero') {
         properties.push(`  heroLastUpdated: ${timestamp}`);
+        // Don't add heroImageUrl when deleting
         if (otherPropertyValue) {
           properties.push(`  ${otherPropertyValue}`);
         } else {
@@ -88,6 +112,9 @@ async function updateCMSConfig(type: 'hero' | 'rooms') {
           properties.push(`  ${otherPropertyValue}`);
         } else {
           properties.push(`  heroLastUpdated: ${Date.now()}`);
+        }
+        if (existingHeroImageUrl) {
+          properties.push(`  ${existingHeroImageUrl}`);
         }
         properties.push(`  roomsLastUpdated: ${timestamp}`);
       }
@@ -102,10 +129,17 @@ async function updateCMSConfig(type: 'hero' | 'rooms') {
     } else {
       // Fallback: if pattern doesn't match, try simple replace (but replace ALL occurrences)
       const propertyPattern = new RegExp(`${propertyName}:\\s*\\d+`, 'g');
-      const updatedContent = configContent.replace(
+      let updatedContent = configContent.replace(
         propertyPattern,
         `${propertyName}: ${timestamp}`
       );
+      
+      // Remove heroImageUrl if deleting hero
+      if (type === 'hero') {
+        const heroImageUrlPattern = /heroImageUrl:\s*['"][^'"]+['"]/g;
+        updatedContent = updatedContent.replace(heroImageUrlPattern, '');
+      }
+      
       await writeFile(configPath, updatedContent, 'utf-8');
     }
   } catch (error) {

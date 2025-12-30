@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, readFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { revalidatePath } from 'next/cache';
+import { uploadImageToBlob, deleteImageFromBlob } from '@/lib/blob-storage';
 
 export const maxDuration = 60; // 60 seconds for large uploads
 
@@ -25,26 +26,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Get current hero image URL to delete old one
+    const configPath = join(process.cwd(), 'lib', 'rooms.ts');
+    const configContent = await readFile(configPath, 'utf-8');
+    const heroImageUrlMatch = configContent.match(/heroImageUrl:\s*['"]([^'"]+)['"]/);
+    const oldHeroImageUrl = heroImageUrlMatch ? heroImageUrlMatch[1] : null;
 
-    // Always save as hero-background.jpg (Hero component expects this)
-    const heroDir = join(process.cwd(), 'public', 'images', 'hero');
-    const filePath = join(heroDir, 'hero-background.jpg');
+    // Upload to R2 blob storage
+    const blobPath = 'hero/hero-background.jpg';
+    const { url } = await uploadImageToBlob(blobPath, file, {
+      contentType: file.type || 'image/jpeg',
+      allowOverwrite: true,
+    });
 
-    // Ensure directory exists
-    try {
-      await mkdir(heroDir, { recursive: true });
-    } catch (error) {
-      // Directory might already exist, ignore error
+    // Delete old hero image if it exists and is different
+    if (oldHeroImageUrl && oldHeroImageUrl !== url) {
+      try {
+        await deleteImageFromBlob(oldHeroImageUrl);
+      } catch (error) {
+        console.warn('Error deleting old hero image:', error);
+        // Continue even if deletion fails
+      }
     }
 
-    // Write file
-    await writeFile(filePath, buffer);
-
-    // Update CMS config timestamp
-    await updateCMSConfig('hero');
+    // Update CMS config with new URL and timestamp
+    await updateCMSConfig('hero', url);
 
     // Revalidate the home page for all locales
     revalidatePath('/en');
@@ -52,7 +58,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Hero image updated successfully' 
+      message: 'Hero image updated successfully',
+      url 
     });
   } catch (error) {
     console.error('Error updating hero image:', error);
@@ -64,7 +71,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function updateCMSConfig(type: 'hero' | 'rooms') {
+async function updateCMSConfig(type: 'hero' | 'rooms', heroImageUrl?: string) {
   try {
     const configPath = join(process.cwd(), 'lib', 'rooms.ts');
     const configContent = await readFile(configPath, 'utf-8');
@@ -79,9 +86,15 @@ async function updateCMSConfig(type: 'hero' | 'rooms') {
     if (match) {
       let configBody = match[1];
       
-      // Remove ALL occurrences of the property we're updating (to handle duplicates)
+      // Remove ALL occurrences of properties we're updating (to handle duplicates)
       const propertyPattern = new RegExp(`\\s*${propertyName}:\\s*\\d+[,\\n]*`, 'g');
       configBody = configBody.replace(propertyPattern, '');
+      
+      // Remove heroImageUrl if updating hero
+      if (type === 'hero') {
+        const heroImageUrlPattern = /\s*heroImageUrl:\s*['"][^'"]+['"][,\n]*/g;
+        configBody = configBody.replace(heroImageUrlPattern, '');
+      }
       
       // Also remove the other property if it exists (to rebuild cleanly)
       const otherPropertyName = type === 'hero' ? 'roomsLastUpdated' : 'heroLastUpdated';
@@ -93,13 +106,27 @@ async function updateCMSConfig(type: 'hero' | 'rooms') {
         configBody = configBody.replace(otherPropertyPattern, '');
       }
       
+      // Get existing heroImageUrl if not updating it
+      let existingHeroImageUrl = '';
+      if (type !== 'hero') {
+        const heroImageUrlMatch = configBody.match(/heroImageUrl:\s*['"]([^'"]+)['"]/);
+        if (heroImageUrlMatch) {
+          existingHeroImageUrl = heroImageUrlMatch[0];
+          const heroImageUrlPattern = /\s*heroImageUrl:\s*['"][^'"]+['"][,\n]*/g;
+          configBody = configBody.replace(heroImageUrlPattern, '');
+        }
+      }
+      
       // Clean up extra commas and whitespace
       configBody = configBody.trim().replace(/^,|,$/g, '').trim();
       
-      // Build new config body with both properties
+      // Build new config body with all properties
       const properties = [];
       if (type === 'hero') {
         properties.push(`  heroLastUpdated: ${timestamp}`);
+        if (heroImageUrl) {
+          properties.push(`  heroImageUrl: '${heroImageUrl}'`);
+        }
         if (otherPropertyValue) {
           properties.push(`  ${otherPropertyValue}`);
         } else {
@@ -110,6 +137,9 @@ async function updateCMSConfig(type: 'hero' | 'rooms') {
           properties.push(`  ${otherPropertyValue}`);
         } else {
           properties.push(`  heroLastUpdated: ${Date.now()}`);
+        }
+        if (existingHeroImageUrl) {
+          properties.push(`  ${existingHeroImageUrl}`);
         }
         properties.push(`  roomsLastUpdated: ${timestamp}`);
       }
@@ -124,10 +154,25 @@ async function updateCMSConfig(type: 'hero' | 'rooms') {
     } else {
       // Fallback: if pattern doesn't match, try simple replace (but replace ALL occurrences)
       const propertyPattern = new RegExp(`${propertyName}:\\s*\\d+`, 'g');
-      const updatedContent = configContent.replace(
+      let updatedContent = configContent.replace(
         propertyPattern,
         `${propertyName}: ${timestamp}`
       );
+      
+      // Add heroImageUrl if updating hero
+      if (type === 'hero' && heroImageUrl) {
+        const heroImageUrlPattern = /heroImageUrl:\s*['"][^'"]+['"]/g;
+        if (heroImageUrlPattern.test(updatedContent)) {
+          updatedContent = updatedContent.replace(heroImageUrlPattern, `heroImageUrl: '${heroImageUrl}'`);
+        } else {
+          // Insert after heroLastUpdated
+          updatedContent = updatedContent.replace(
+            /(heroLastUpdated:\s*\d+)/,
+            `$1,\n  heroImageUrl: '${heroImageUrl}'`
+          );
+        }
+      }
+      
       await writeFile(configPath, updatedContent, 'utf-8');
     }
   } catch (error) {

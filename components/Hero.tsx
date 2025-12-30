@@ -3,9 +3,27 @@
 import { ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 
 export default function Hero() {
   const t = useTranslations();
+  const [heroImageUrl, setHeroImageUrl] = useState<string>('/images/hero/hero-background.jpg');
+
+  useEffect(() => {
+    // Fetch hero image URL from API
+    fetch('/api/cms/hero-image')
+      .then(res => res.json())
+      .then(data => {
+        if (data.url) {
+          setHeroImageUrl(data.url);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching hero image URL:', error);
+        // Keep default fallback URL
+      });
+  }, []);
+
   const scrollToInquiry = () => {
     const element = document.getElementById('inquiry');
     element?.scrollIntoView({ behavior: 'smooth' });
@@ -16,13 +34,14 @@ export default function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900/70 to-gray-800/50 z-0">
         <Image
-          src="/images/hero/hero-background.jpg"
+          src={heroImageUrl}
           alt="Japanese Guest House"
           fill
           priority
           quality={90}
           className="object-cover opacity-40"
           sizes="100vw"
+          unoptimized={heroImageUrl.startsWith('http')} // Don't optimize external URLs
         />
       </div>
       

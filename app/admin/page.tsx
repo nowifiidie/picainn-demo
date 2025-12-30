@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [isHeroUploading, setIsHeroUploading] = useState(false);
   const [isRoomUploading, setIsRoomUploading] = useState(false);
   const [heroImageExists, setHeroImageExists] = useState(false);
+  const [heroImageUrl, setHeroImageUrl] = useState<string>('/images/hero/hero-background.jpg');
   const [isDeletingHero, setIsDeletingHero] = useState(false);
   const [rooms, setRooms] = useState<RoomDisplay[]>([]);
   const [isLoadingRooms, setIsLoadingRooms] = useState(true);
@@ -76,6 +77,9 @@ export default function AdminPage() {
       if (result.success) {
         e.currentTarget.reset();
         setHeroImageExists(true);
+        if (result.url) {
+          setHeroImageUrl(result.url);
+        }
       }
     } catch (error) {
       setHeroStatus({
@@ -120,9 +124,21 @@ export default function AdminPage() {
   useEffect(() => {
     async function checkHeroImage() {
       try {
-        // Add cache busting to ensure fresh check
-        const response = await fetch(`/images/hero/hero-background.jpg?t=${Date.now()}`, { method: 'HEAD' });
-        setHeroImageExists(response.ok);
+        const response = await fetch('/api/cms/hero-image');
+        const data = await response.json();
+        if (data.url) {
+          setHeroImageUrl(data.url);
+          // Check if URL is from blob storage (not the fallback static path)
+          if (!data.url.startsWith('/images/hero/')) {
+            // Verify the blob URL exists
+            const blobCheck = await fetch(data.url, { method: 'HEAD' });
+            setHeroImageExists(blobCheck.ok);
+          } else {
+            // Fallback: check static file
+            const staticCheck = await fetch(`${data.url}?t=${Date.now()}`, { method: 'HEAD' });
+            setHeroImageExists(staticCheck.ok);
+          }
+        }
       } catch {
         setHeroImageExists(false);
       }
@@ -807,12 +823,12 @@ export default function AdminPage() {
               </div>
               <div className="relative w-full h-48 rounded-sm overflow-hidden border border-gray-300">
                 <Image
-                  src="/images/hero/hero-background.jpg"
+                  src={heroImageUrl}
                   alt="Current hero image"
                   fill
                   className="object-cover"
                   sizes="100%"
-                  unoptimized
+                  unoptimized={heroImageUrl.startsWith('http')}
                 />
               </div>
             </div>
