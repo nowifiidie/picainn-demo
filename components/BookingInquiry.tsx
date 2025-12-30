@@ -5,6 +5,12 @@ import { DayPicker, DateRange } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getRoomMetadata } from '@/lib/rooms';
+
+interface RoomOption {
+  value: string;
+  label: string;
+}
 
 export default function BookingInquiry() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -20,6 +26,51 @@ export default function BookingInquiry() {
   });
   const [showThankYou, setShowThankYou] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [roomTypes, setRoomTypes] = useState<RoomOption[]>([]);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(true);
+
+  // Fetch rooms from API to populate dropdown
+  useEffect(() => {
+    async function fetchRooms() {
+      try {
+        const response = await fetch(`/api/rooms?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch rooms');
+        }
+        const data = await response.json();
+        const roomImages = data.rooms;
+
+        // Build room options from fetched rooms
+        const roomOptions: RoomOption[] = roomImages
+          .map((roomImg: any) => {
+            // Use metadata from API if available (Blob Storage rooms), otherwise fall back to static metadata
+            const metadata = roomImg.metadata || getRoomMetadata(roomImg.roomId);
+            if (!metadata) {
+              return null;
+            }
+
+            // Format label as "{room name} - {room type}" to match room cards
+            return {
+              value: roomImg.roomId,
+              label: `${metadata.name} - ${metadata.type}`,
+            };
+          })
+          .filter((option: RoomOption | null): option is RoomOption => option !== null);
+
+        setRoomTypes(roomOptions);
+      } catch (error) {
+        console.error('Error fetching rooms:', error);
+        // Fallback to empty array on error
+        setRoomTypes([]);
+      } finally {
+        setIsLoadingRooms(false);
+      }
+    }
+
+    fetchRooms();
+  }, []);
 
   // Listen for room selection from gallery modal
   useEffect(() => {
@@ -85,13 +136,6 @@ export default function BookingInquiry() {
     }
   };
 
-  const roomTypes = [
-    { value: 'room1', label: 'Room 1 - Standard Double' },
-    { value: 'room2', label: 'Room 2 - Deluxe Double' },
-    { value: 'room3', label: 'Room 3 - Family Room' },
-    { value: 'room4', label: 'Room 4 - Economy Single' },
-    { value: 'room5', label: 'Room 5 - Premium Suite' },
-  ];
 
   const contactOptions = [
     { value: 'whatsapp', label: 'WhatsApp' },
@@ -187,9 +231,12 @@ export default function BookingInquiry() {
                 required
                 value={formData.roomType}
                 onChange={(e) => setFormData({ ...formData, roomType: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355] focus:border-transparent"
+                disabled={isLoadingRooms}
+                className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="">Please select a room</option>
+                <option value="">
+                  {isLoadingRooms ? 'Loading rooms...' : 'Please select a room'}
+                </option>
                 {roomTypes.map((room) => (
                   <option key={room.value} value={room.value}>
                     {room.label}

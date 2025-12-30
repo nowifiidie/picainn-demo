@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { getRoomMetadata } from '@/lib/rooms';
+import { Redis } from '@upstash/redis';
+
+const ROOM_METADATA_KEY = 'room-metadata';
+
+const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  ? new Redis({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    })
+  : null;
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,15 +25,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get room type label
-    const roomTypeLabels: { [key: string]: string } = {
-      'room1': 'Room 1 - Standard Double',
-      'room2': 'Room 2 - Deluxe Double',
-      'room3': 'Room 3 - Family Room',
-      'room4': 'Room 4 - Economy Single',
-      'room5': 'Room 5 - Premium Suite',
-    };
-    const roomTypeLabel = roomTypeLabels[roomType] || roomType;
+    // Get room metadata to build room type label
+    // Check Redis first (for Blob Storage rooms), then fall back to static metadata
+    let roomTypeLabel = roomType;
+    try {
+      let metadata = null;
+      
+      // Try Redis first (Blob Storage rooms)
+      if (redis) {
+        try {
+          const blobRooms = await redis.get<Record<string, any>>(ROOM_METADATA_KEY) || {};
+          if (blobRooms[roomType]) {
+            metadata = blobRooms[roomType];
+          }
+        } catch (error) {
+          console.log('Redis not available, using static metadata');
+        }
+      }
+      
+      // Fall back to static metadata if not found in Redis
+      if (!metadata) {
+        metadata = getRoomMetadata(roomType);
+      }
+      
+      if (metadata) {
+        roomTypeLabel = `${metadata.name} - ${metadata.type}`;
+      }
+    } catch (error) {
+      console.error('Error fetching room metadata:', error);
+      // Fallback to roomType if metadata fetch fails
+      roomTypeLabel = roomType;
+    }
 
     // Format the email content
     const dateRangeText = dateRange?.from && dateRange?.to
