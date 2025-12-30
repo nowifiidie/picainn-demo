@@ -1,47 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, readFile, mkdir } from 'node:fs/promises';
+import { unlink, access, constants } from 'node:fs/promises';
 import { join } from 'node:path';
 import { revalidatePath } from 'next/cache';
 
-export const maxDuration = 60; // 60 seconds for large uploads
-
-export async function POST(request: NextRequest) {
+export async function DELETE(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get('image') as File;
-    
-    if (!file) {
-      return NextResponse.json(
-        { success: false, error: 'No image file provided' },
-        { status: 400 }
-      );
-    }
+    const filePath = join(process.cwd(), 'public', 'images', 'hero', 'hero-background.jpg');
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json(
-        { success: false, error: 'File must be an image' },
-        { status: 400 }
-      );
-    }
-
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Always save as hero-background.jpg (Hero component expects this)
-    const heroDir = join(process.cwd(), 'public', 'images', 'hero');
-    const filePath = join(heroDir, 'hero-background.jpg');
-
-    // Ensure directory exists
+    // Check if file exists
     try {
-      await mkdir(heroDir, { recursive: true });
-    } catch (error) {
-      // Directory might already exist, ignore error
+      await access(filePath, constants.F_OK);
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Hero image does not exist' },
+        { status: 404 }
+      );
     }
 
-    // Write file
-    await writeFile(filePath, buffer);
+    // Delete the file
+    await unlink(filePath);
 
     // Update CMS config timestamp
     await updateCMSConfig('hero');
@@ -52,13 +29,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Hero image updated successfully' 
+      message: 'Hero image deleted successfully' 
     });
   } catch (error) {
-    console.error('Error updating hero image:', error);
+    console.error('Error deleting hero image:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { success: false, error: `Failed to update hero image: ${errorMessage}` },
+      { success: false, error: `Failed to delete hero image: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -66,6 +43,7 @@ export async function POST(request: NextRequest) {
 
 async function updateCMSConfig(type: 'hero' | 'rooms') {
   try {
+    const { readFile, writeFile } = await import('node:fs/promises');
     const configPath = join(process.cwd(), 'lib', 'rooms.ts');
     const configContent = await readFile(configPath, 'utf-8');
     const timestamp = Date.now();

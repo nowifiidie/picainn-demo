@@ -41,6 +41,8 @@ export default function AdminPage() {
   const [roomStatus, setRoomStatus] = useState<{ success: boolean; message?: string; error?: string; details?: string; note?: string } | null>(null);
   const [isHeroUploading, setIsHeroUploading] = useState(false);
   const [isRoomUploading, setIsRoomUploading] = useState(false);
+  const [heroImageExists, setHeroImageExists] = useState(false);
+  const [isDeletingHero, setIsDeletingHero] = useState(false);
   const [rooms, setRooms] = useState<RoomDisplay[]>([]);
   const [isLoadingRooms, setIsLoadingRooms] = useState(true);
   const [editingRoom, setEditingRoom] = useState<RoomDisplay | null>(null);
@@ -61,20 +63,72 @@ export default function AdminPage() {
     setIsHeroUploading(true);
     setHeroStatus(null);
 
-    const formData = new FormData(e.currentTarget);
-    const response = await fetch('/api/cms/update-hero', {
-      method: 'POST',
-      body: formData,
-    });
-    const result = await response.json();
+    try {
+      const formData = new FormData(e.currentTarget);
+      const response = await fetch('/api/cms/update-hero', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
 
-    setHeroStatus(result);
-    setIsHeroUploading(false);
-    
-    if (result.success) {
-      e.currentTarget.reset();
+      setHeroStatus(result);
+      
+      if (result.success) {
+        e.currentTarget.reset();
+        setHeroImageExists(true);
+      }
+    } catch (error) {
+      setHeroStatus({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to upload hero image'
+      });
+    } finally {
+      setIsHeroUploading(false);
     }
   }
+
+  async function handleDeleteHero() {
+    if (!confirm('Are you sure you want to delete the hero image? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsDeletingHero(true);
+    setHeroStatus(null);
+
+    try {
+      const response = await fetch('/api/cms/delete-hero', {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+
+      setHeroStatus(result);
+      
+      if (result.success) {
+        setHeroImageExists(false);
+      }
+    } catch (error) {
+      setHeroStatus({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete hero image'
+      });
+    } finally {
+      setIsDeletingHero(false);
+    }
+  }
+
+  // Check if hero image exists on mount and after updates
+  useEffect(() => {
+    async function checkHeroImage() {
+      try {
+        // Add cache busting to ensure fresh check
+        const response = await fetch(`/images/hero/hero-background.jpg?t=${Date.now()}`, { method: 'HEAD' });
+        setHeroImageExists(response.ok);
+      } catch {
+        setHeroImageExists(false);
+      }
+    }
+    checkHeroImage();
+  }, [heroStatus]);
 
   async function handleRoomSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -736,10 +790,38 @@ export default function AdminPage() {
         {/* Hero Image Upload Section */}
         <section className="bg-white rounded-lg shadow-sm p-8 mb-8">
           <h2 className="text-2xl font-light text-gray-900 mb-6">Hero Image</h2>
+          
+          {/* Current Hero Image Preview */}
+          {heroImageExists && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-gray-700">Current Hero Image</p>
+                <button
+                  onClick={handleDeleteHero}
+                  disabled={isDeletingHero}
+                  className="flex items-center gap-2 px-4 py-2 text-sm bg-red-600 text-white rounded-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {isDeletingHero ? 'Deleting...' : 'Delete Hero Image'}
+                </button>
+              </div>
+              <div className="relative w-full h-48 rounded-sm overflow-hidden border border-gray-300">
+                <Image
+                  src="/images/hero/hero-background.jpg"
+                  alt="Current hero image"
+                  fill
+                  className="object-cover"
+                  sizes="100%"
+                  unoptimized
+                />
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleHeroSubmit} className="space-y-4">
             <div>
               <label htmlFor="hero-image" className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Hero Background Image
+                {heroImageExists ? 'Replace Hero Background Image' : 'Upload Hero Background Image'}
               </label>
               <input
                 type="file"
@@ -750,7 +832,9 @@ export default function AdminPage() {
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
               />
               <p className="mt-1 text-sm text-gray-500">
-                This will replace the current hero background image.
+                {heroImageExists 
+                  ? 'This will replace the current hero background image.'
+                  : 'Upload a new hero background image.'}
               </p>
             </div>
             <button
@@ -758,7 +842,7 @@ export default function AdminPage() {
               disabled={isHeroUploading}
               className="px-6 py-2 bg-[#333333] text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isHeroUploading ? 'Uploading...' : 'Update Hero Image'}
+              {isHeroUploading ? 'Uploading...' : heroImageExists ? 'Update Hero Image' : 'Upload Hero Image'}
             </button>
             {heroStatus && (
               <div
