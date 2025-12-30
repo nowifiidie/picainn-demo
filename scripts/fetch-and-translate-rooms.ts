@@ -48,7 +48,20 @@ const roomDescriptions: Record<string, string> = {
 };
 
 // Translation function - you can replace this with actual translation API
-function translateDescription(description: string): Record<string, string> {
+function translateDescription(description: string): {
+  en: string;
+  zh: string;
+  'zh-TW': string;
+  ko: string;
+  th: string;
+  es: string;
+  fr: string;
+  id: string;
+  ar: string;
+  de: string;
+  vi: string;
+  my: string;
+} {
   // For now, return the same description for all languages
   // In production, replace this with actual translation logic
   return {
