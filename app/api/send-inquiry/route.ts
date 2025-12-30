@@ -17,10 +17,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { fullName, email, guests, roomType, contactApp, dateRange } = body;
 
+    console.log('Received inquiry:', { fullName, email, guests, roomType, contactApp, dateRange });
+
     // Validate required fields
     if (!fullName || !email || !roomType) {
+      console.error('Validation failed:', { fullName: !!fullName, email: !!email, roomType: !!roomType });
       return NextResponse.json(
         { error: 'Full name, email, and room type are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate roomType is not empty string
+    if (roomType.trim() === '') {
+      console.error('Room type is empty string');
+      return NextResponse.json(
+        { error: 'Please select a room type' },
         { status: 400 }
       );
     }
@@ -35,21 +47,33 @@ export async function POST(request: NextRequest) {
       if (redis) {
         try {
           const blobRooms = await redis.get<Record<string, any>>(ROOM_METADATA_KEY) || {};
+          console.log('Checking Redis for roomType:', roomType, 'Available rooms:', Object.keys(blobRooms));
           if (blobRooms[roomType]) {
             metadata = blobRooms[roomType];
+            console.log('Found room in Redis:', metadata);
           }
         } catch (error) {
-          console.log('Redis not available, using static metadata');
+          console.log('Redis not available, using static metadata:', error);
         }
       }
       
       // Fall back to static metadata if not found in Redis
       if (!metadata) {
+        console.log('Trying static metadata for roomType:', roomType);
         metadata = getRoomMetadata(roomType);
+        if (metadata) {
+          console.log('Found room in static metadata:', metadata);
+        } else {
+          console.warn('Room not found in static metadata:', roomType);
+        }
       }
       
       if (metadata) {
         roomTypeLabel = `${metadata.name} - ${metadata.type}`;
+        console.log('Room type label:', roomTypeLabel);
+      } else {
+        console.warn('No metadata found for roomType:', roomType, 'Using roomType as label');
+        roomTypeLabel = roomType;
       }
     } catch (error) {
       console.error('Error fetching room metadata:', error);

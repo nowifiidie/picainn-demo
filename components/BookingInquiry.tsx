@@ -96,25 +96,38 @@ export default function BookingInquiry() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate roomType is selected
+    if (!formData.roomType || formData.roomType.trim() === '') {
+      alert(t('booking.pleaseSelectRoom'));
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
+      const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        guests: formData.guests,
+        roomType: formData.roomType,
+        contactApp: formData.contactApp,
+        dateRange: dateRange,
+      };
+      
+      console.log('Submitting inquiry with payload:', payload);
+      
       const response = await fetch('/api/send-inquiry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-          guests: formData.guests,
-          roomType: formData.roomType,
-          contactApp: formData.contactApp,
-          dateRange: dateRange,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
+      
+      console.log('API response:', { status: response.status, data });
 
       if (response.ok) {
         setShowThankYou(true);
@@ -128,6 +141,7 @@ export default function BookingInquiry() {
         });
         setDateRange({ from: undefined, to: undefined });
       } else {
+        console.error('API error:', data);
         alert(data.error || t('booking.error'));
       }
     } catch (error) {
