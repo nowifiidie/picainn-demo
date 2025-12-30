@@ -13,7 +13,7 @@ export default function FloatingSocialDock() {
     {
       name: 'WhatsApp',
       icon: MessageCircle,
-      href: 'https://wa.me/1234567890',
+      href: 'https://wa.me/+819088565019',
       color: 'text-green-500',
     },
     {
