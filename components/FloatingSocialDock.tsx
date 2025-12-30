@@ -16,12 +16,12 @@ export default function FloatingSocialDock() {
     wechat: '/images/qr/wechat-qr.png',
   };
 
-  // Logo image paths - place your logo images in public/images/logos/
+  // Logo image paths - logos are in public/images/logo/
   const logoImages = {
-    whatsapp: '/images/logos/whatsapp-logo.png',
-    line: '/images/logos/line-logo.png',
-    xiaohongshu: '/images/logos/xiaohongshu-logo.png',
-    wechat: '/images/logos/wechat-logo.png',
+    whatsapp: '/images/logo/whatsapp-logo.png',
+    line: '/images/logo/line-logo.png',
+    xiaohongshu: '/images/logo/xiaohongshu-logo.png',
+    wechat: '/images/logo/wechat-logo.png',
   };
 
   const socialLinks: Array<{
@@ -90,10 +90,14 @@ export default function FloatingSocialDock() {
                   <Image
                     src={hasLogo}
                     alt={link.name}
-                    width={20}
-                    height={20}
-                    className="w-5 h-5 object-contain"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 object-contain"
                     unoptimized
+                    priority={index < 2}
+                    onError={(e) => {
+                      console.error(`Failed to load logo: ${hasLogo}`);
+                    }}
                   />
                 ) : (
                   Icon && <Icon className="w-5 h-5" />
@@ -114,10 +118,14 @@ export default function FloatingSocialDock() {
                   <Image
                     src={hasLogo}
                     alt={link.name}
-                    width={20}
-                    height={20}
-                    className="w-5 h-5 object-contain"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 object-contain"
                     unoptimized
+                    priority={index < 2}
+                    onError={(e) => {
+                      console.error(`Failed to load logo: ${hasLogo}`);
+                    }}
                   />
                 ) : (
                   Icon && <Icon className="w-5 h-5" />
