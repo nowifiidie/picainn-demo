@@ -8,16 +8,17 @@ export default function AboutSpace() {
   const t = useTranslations();
   const [showLocationModal, setShowLocationModal] = useState(false);
   
-  // Property location - you can update this with the exact address
-  const propertyAddress = 'Near Komagome Station, Bunkyo City, Tokyo';
-  const komagomeStation = 'Komagome Station, Tokyo';
+  // Property location extracted from your Google Maps link
+  const komagomeStation = 'Komagome Station, 2-chōme-1 Komagome, Toshima City, Tokyo 170-0003';
+  const propertyAddress = '5 Chome-55-3 Honkomagome, Bunkyo City, Tokyo';
   
-  // Google Maps embed URL showing the property location
-  // Using a standard embed URL that shows the area around Komagome Station
-  const mapEmbedUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3240.5!2d139.737!3d35.736!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188c1e8b8b8b8b%3A0x1e1e1e1e1e1e1e1e!2sKomagome%20Station!5e0!3m2!1sen!2sus!4v1234567890!5m2!1sen!2sus`;
+  // Google Maps embed URL showing both locations
+  // Centered at 35.7361674, 139.7470783 (from your directions link) with zoom level 17
+  // Shows both Komagome Station and the property location
+  const mapEmbedUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3240.488!2d139.7470783!3d35.7361674!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188d969bd7335f%3A0xc93afd70355008c3!2sKomagome%20Station!5e0!3m3!1m2!1s0x60188dbffa5bf1b5%3A0xfb4fef01b46a5aa4!2s5%20Chome-55-3%20Honkomagome%2C%20Bunkyo%20City%2C%20Tokyo!5e0!3m2!1sen!2sus!4v1234567890!5m2!1sen!2sus`;
   
-  // Google Maps directions link (opens in new tab with walking directions)
-  const directionsLink = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(komagomeStation)}&destination=${encodeURIComponent(propertyAddress)}&travelmode=walking`;
+  // Google Maps directions link (your original link)
+  const directionsLink = `https://www.google.com/maps/dir/Komagome+Station,+2-ch%C5%8Dme-1+Komagome,+Toshima+City,+Tokyo+170-0003/5+Chome-55-3+Honkomagome,+Bunkyo+City,+Tokyo/@35.7361674,139.7470783,17z/data=!3m1!4b1!4m14!4m13!1m5!1m1!1s0x60188d969bd7335f:0xc93afd70355008c3!2m2!1d139.7470098!2d35.7365665!1m5!1m1!1s0x60188dbffa5bf1b5:0xfb4fef01b46a5aa4!2m2!1d139.7519715!2d35.7349141!3e3?entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoKLDEwMDc5MjA3MUgBUAM%3D`;
   
   const features = [
     {
