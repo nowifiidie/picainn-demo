@@ -87,7 +87,9 @@ export default function AdminPage() {
         setHeroImageExists(true);
         if (result.url) {
           console.log('Hero image uploaded, new URL:', result.url);
+          // Immediately update state - don't wait for useEffect
           setHeroImageUrl(result.url);
+          setHeroImageExists(true);
           // Store in localStorage so homepage can pick it up even in different tabs
           localStorage.setItem('heroImageUrl', result.url);
           localStorage.setItem('heroImageTimestamp', Date.now().toString());
@@ -143,19 +145,34 @@ export default function AdminPage() {
   useEffect(() => {
     async function checkHeroImage() {
       try {
+        // Check localStorage first (for recently uploaded images)
+        const storedUrl = localStorage.getItem('heroImageUrl');
+        if (storedUrl && !storedUrl.startsWith('/images/hero/')) {
+          console.log('Admin: Using stored hero image URL:', storedUrl);
+          setHeroImageUrl(storedUrl);
+          setHeroImageExists(true);
+          return; // Don't check API if we have a valid stored URL
+        }
+
         const response = await fetch('/api/cms/hero-image');
         const data = await response.json();
         if (data.url) {
-          setHeroImageUrl(data.url);
+          // Only update if we don't already have a blob URL set
+          if (!heroImageUrl.startsWith('http') || data.url.startsWith('http')) {
+            setHeroImageUrl(data.url);
+          }
           // Check if URL is from blob storage (not the fallback static path)
           if (!data.url.startsWith('/images/hero/')) {
-            // Verify the blob URL exists
-            const blobCheck = await fetch(data.url, { method: 'HEAD' });
-            setHeroImageExists(blobCheck.ok);
+            // For blob URLs, assume they exist if API returns them
+            setHeroImageExists(true);
           } else {
             // Fallback: check static file
-            const staticCheck = await fetch(`${data.url}?t=${Date.now()}`, { method: 'HEAD' });
-            setHeroImageExists(staticCheck.ok);
+            try {
+              const staticCheck = await fetch(`${data.url}?t=${Date.now()}`, { method: 'HEAD' });
+              setHeroImageExists(staticCheck.ok);
+            } catch {
+              setHeroImageExists(false);
+            }
           }
         }
       } catch {
@@ -842,6 +859,7 @@ export default function AdminPage() {
               </div>
               <div className="relative w-full h-48 rounded-sm overflow-hidden border border-gray-300">
                 <Image
+                  key={heroImageUrl} // Force re-render when URL changes
                   src={heroImageUrl}
                   alt="Current hero image"
                   fill
