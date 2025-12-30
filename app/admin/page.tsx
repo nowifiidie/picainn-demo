@@ -61,11 +61,18 @@ export default function AdminPage() {
 
   async function handleHeroSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
+    
+    if (!form) {
+      console.error('Form element not found');
+      return;
+    }
+
     setIsHeroUploading(true);
     setHeroStatus(null);
 
     try {
-      const formData = new FormData(e.currentTarget);
+      const formData = new FormData(form);
       const response = await fetch('/api/cms/update-hero', {
         method: 'POST',
         body: formData,
@@ -75,7 +82,8 @@ export default function AdminPage() {
       setHeroStatus(result);
       
       if (result.success) {
-        e.currentTarget.reset();
+        // Reset form
+        form.reset();
         setHeroImageExists(true);
         if (result.url) {
           setHeroImageUrl(result.url);
