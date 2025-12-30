@@ -5,8 +5,17 @@ import { routing } from '@/src/i18n/routing';
 const intlMiddleware = createMiddleware(routing);
 
 export function middleware(request: NextRequest) {
-  // Handle admin routes with authentication first
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  const pathname = request.nextUrl.pathname;
+
+  // Redirect locale-prefixed admin routes to /admin (e.g., /zh/admin -> /admin)
+  if (pathname.match(/^\/(zh|en)\/admin/)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/admin';
+    return NextResponse.redirect(url);
+  }
+
+  // Handle admin routes with authentication (exclude from locale routing)
+  if (pathname.startsWith('/admin')) {
     const authHeader = request.headers.get('authorization');
 
     if (!authHeader || !authHeader.startsWith('Basic ')) {
@@ -44,6 +53,9 @@ export function middleware(request: NextRequest) {
         },
       });
     }
+
+    // Admin routes bypass locale routing - return early
+    return NextResponse.next();
   }
 
   // Apply next-intl middleware for all other routes
