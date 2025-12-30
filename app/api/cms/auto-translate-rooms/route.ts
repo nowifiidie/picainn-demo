@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { revalidatePath } from 'next/cache';
-import { translate } from '@vitalets/google-translate-api';
 
 const ROOM_METADATA_KEY = 'room-metadata';
 
@@ -12,7 +11,7 @@ const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
     })
   : null;
 
-// Language code mapping
+// Language code mapping for MyMemory Translation API
 const LANGUAGE_CODES: Record<string, string> = {
   'en': 'en',
   'zh': 'zh-CN', // Simplified Chinese
@@ -28,12 +27,27 @@ const LANGUAGE_CODES: Record<string, string> = {
   'my': 'my', // Myanmar
 };
 
-// Translate text using Google Translate API
+// Translate text using MyMemory Translation API (free, no API key required)
 async function translateText(text: string, targetLang: string): Promise<string> {
   try {
     const langCode = LANGUAGE_CODES[targetLang] || targetLang;
-    const result = await translate(text, { to: langCode });
-    return result.text;
+    
+    // MyMemory Translation API - free tier: 10,000 words/day
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${langCode}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Translation API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
+      return data.responseData.translatedText;
+    } else {
+      console.error(`Translation failed for ${targetLang}:`, data);
+      return text; // Fallback to original text
+    }
   } catch (error) {
     console.error(`Error translating to ${targetLang}:`, error);
     // Return original text if translation fails
