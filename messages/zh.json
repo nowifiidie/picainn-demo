@@ -25,6 +25,9 @@
     "fullName": "全名",
     "email": "电子邮件",
     "guests": "客人数量",
+    "selectRoomType": "选择房间类型",
+    "loadingRooms": "加载房间中...",
+    "pleaseSelectRoom": "请选择房间",
     "contactApp": "首选联系方式",
     "contactOptions": {
       "whatsapp": "WhatsApp",
@@ -33,9 +36,12 @@
       "email": "电子邮件"
     },
     "submit": "提交咨询",
+    "sending": "发送中...",
     "thankYou": "谢谢！",
     "thankYouMessage": "我们已收到您的咨询。我们将通过您首选的联系方式与您联系以完成预订。",
-    "close": "关闭"
+    "close": "关闭",
+    "error": "提交咨询失败，请重试。",
+    "errorGeneric": "发生错误，请重试。"
   },
   "localGuide": {
     "title": "附近推荐",
@@ -45,7 +51,8 @@
   },
   "footer": {
     "license": "住宅宿泊事业法登记号",
-    "licenseNumber": "第M000000000号"
+    "licenseNumber": "第M000000000号",
+    "copyright": "picainn. 版权所有。"
   }
 }
 

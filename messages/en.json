@@ -25,6 +25,9 @@
     "fullName": "Full Name",
     "email": "Email",
     "guests": "Number of Guests",
+    "selectRoomType": "Select Room Type",
+    "loadingRooms": "Loading rooms...",
+    "pleaseSelectRoom": "Please select a room",
     "contactApp": "Preferred Contact App",
     "contactOptions": {
       "whatsapp": "WhatsApp",
@@ -33,9 +36,12 @@
       "email": "Email"
     },
     "submit": "Submit Inquiry",
+    "sending": "Sending...",
     "thankYou": "Thank You!",
     "thankYouMessage": "We have received your inquiry. We will contact you on your preferred app to finalize your booking.",
-    "close": "Close"
+    "close": "Close",
+    "error": "Failed to submit inquiry. Please try again.",
+    "errorGeneric": "An error occurred. Please try again."
   },
   "localGuide": {
     "title": "Nearby Favorites",
@@ -45,7 +51,8 @@
   },
   "footer": {
     "license": "Residential Accommodation Business Act License No.",
-    "licenseNumber": "第M000000000号"
+    "licenseNumber": "第M000000000号",
+    "copyright": "picainn. All rights reserved."
   }
 }
 

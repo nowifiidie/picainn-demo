@@ -6,6 +6,7 @@ import 'react-day-picker/dist/style.css';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getRoomMetadata } from '@/lib/rooms';
+import { useTranslations } from 'next-intl';
 
 interface RoomOption {
   value: string;
@@ -13,6 +14,7 @@ interface RoomOption {
 }
 
 export default function BookingInquiry() {
+  const t = useTranslations();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: undefined,
     to: undefined,
@@ -126,11 +128,11 @@ export default function BookingInquiry() {
         });
         setDateRange({ from: undefined, to: undefined });
       } else {
-        alert(data.error || 'Failed to submit inquiry. Please try again.');
+        alert(data.error || t('booking.error'));
       }
     } catch (error) {
       console.error('Error submitting inquiry:', error);
-      alert('An error occurred. Please try again.');
+      alert(t('booking.errorGeneric'));
     } finally {
       setIsSubmitting(false);
     }
@@ -138,23 +140,23 @@ export default function BookingInquiry() {
 
 
   const contactOptions = [
-    { value: 'whatsapp', label: 'WhatsApp' },
-    { value: 'line', label: 'LINE' },
-    { value: 'wechat', label: 'WeChat' },
-    { value: 'email', label: 'Email' },
+    { value: 'whatsapp', label: t('booking.contactOptions.whatsapp') },
+    { value: 'line', label: t('booking.contactOptions.line') },
+    { value: 'wechat', label: t('booking.contactOptions.wechat') },
+    { value: 'email', label: t('booking.contactOptions.email') },
   ];
 
   return (
     <section id="inquiry" className="py-16 sm:py-24 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl sm:text-4xl font-light text-[#333333] mb-12 text-center">
-          Book Your Stay
+          {t('booking.title')}
         </h2>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Date Picker */}
           <div className="bg-[#FAFAFA] p-6 rounded-sm">
-            <h3 className="text-lg font-medium text-[#333333] mb-4">Select Dates</h3>
+            <h3 className="text-lg font-medium text-[#333333] mb-4">{t('booking.selectDates')}</h3>
             <DayPicker
               mode="range"
               selected={dateRange}
@@ -193,7 +195,7 @@ export default function BookingInquiry() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-[#333333] mb-2">
-                Full Name
+                {t('booking.fullName')}
               </label>
               <input
                 type="text"
@@ -208,7 +210,7 @@ export default function BookingInquiry() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-[#333333] mb-2">
-                Email
+                {t('booking.email')}
               </label>
               <input
                 type="email"
@@ -223,7 +225,7 @@ export default function BookingInquiry() {
 
             <div>
               <label htmlFor="roomType" className="block text-sm font-medium text-[#333333] mb-2">
-                Select Room Type <span className="text-red-500">*</span>
+                {t('booking.selectRoomType')} <span className="text-red-500">*</span>
               </label>
               <select
                 id="roomType"
@@ -235,7 +237,7 @@ export default function BookingInquiry() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">
-                  {isLoadingRooms ? 'Loading rooms...' : 'Please select a room'}
+                  {isLoadingRooms ? t('booking.loadingRooms') : t('booking.pleaseSelectRoom')}
                 </option>
                 {roomTypes.map((room) => (
                   <option key={room.value} value={room.value}>
@@ -247,7 +249,7 @@ export default function BookingInquiry() {
 
             <div>
               <label htmlFor="guests" className="block text-sm font-medium text-[#333333] mb-2">
-                Number of Guests
+                {t('booking.guests')}
               </label>
               <select
                 id="guests"
@@ -266,7 +268,7 @@ export default function BookingInquiry() {
 
             <div>
               <label htmlFor="contactApp" className="block text-sm font-medium text-[#333333] mb-2">
-                Preferred Contact App
+                {t('booking.contactApp')}
               </label>
               <select
                 id="contactApp"
@@ -288,7 +290,7 @@ export default function BookingInquiry() {
               disabled={isSubmitting}
               className="w-full px-6 py-3 bg-[#333333] text-white rounded-sm font-medium hover:bg-[#555555] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Sending...' : 'Submit Inquiry'}
+              {isSubmitting ? t('booking.sending') : t('booking.submit')}
             </button>
           </form>
         </div>
@@ -306,16 +308,16 @@ export default function BookingInquiry() {
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-2xl font-medium text-[#333333] mb-4">
-              Thank You!
+              {t('booking.thankYou')}
             </h3>
             <p className="text-[#333333] mb-6">
-              We have received your inquiry. We will contact you on your preferred app to finalize your booking.
+              {t('booking.thankYouMessage')}
             </p>
             <button
               onClick={() => setShowThankYou(false)}
               className="w-full px-6 py-3 bg-[#333333] text-white rounded-sm font-medium hover:bg-[#555555] transition-colors"
             >
-              Close
+              {t('booking.close')}
             </button>
           </div>
         </div>

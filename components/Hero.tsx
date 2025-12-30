@@ -2,8 +2,10 @@
 
 import { ChevronDown } from 'lucide-react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 export default function Hero() {
+  const t = useTranslations();
   const scrollToInquiry = () => {
     const element = document.getElementById('inquiry');
     element?.scrollIntoView({ behavior: 'smooth' });
@@ -27,16 +29,16 @@ export default function Hero() {
       {/* Content */}
       <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-light text-white mb-4 tracking-tight">
-          Welcome to Our Guest House
+          {t('hero.title')}
         </h1>
         <p className="text-lg sm:text-xl md:text-2xl text-white/90 mb-8 font-light">
-          Experience authentic Japanese hospitality in the heart of Tokyo
+          {t('hero.subtitle')}
         </p>
         <button
           onClick={scrollToInquiry}
           className="px-8 py-3 bg-white text-[#333333] rounded-sm font-medium hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl"
         >
-          Check Availability
+          {t('hero.checkAvailability')}
         </button>
       </div>
 
