@@ -4,7 +4,20 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import RoomDetailModal from './RoomDetailModal';
 import { getRoomMetadata } from '@/lib/rooms';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+
+// Helper function to get translated description
+function getTranslatedDescription(
+  description: string,
+  descriptionI18n?: Record<string, string>,
+  locale?: string
+): string {
+  if (descriptionI18n && locale && descriptionI18n[locale]) {
+    return descriptionI18n[locale];
+  }
+  // Fallback to default description
+  return description;
+}
 
 interface Room {
   id: number;
@@ -47,6 +60,7 @@ interface RoomImages {
 
 export default function PropertyGallery() {
   const t = useTranslations();
+  const locale = useLocale();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,7 +112,11 @@ export default function PropertyGallery() {
               type: metadata.type,
               image: cacheBustMain,
               images: allImages,
-              description: metadata.description,
+              description: getTranslatedDescription(
+                metadata.description,
+                metadata.descriptionI18n,
+                locale
+              ),
               amenities: metadata.amenities,
               bedInfo: metadata.bedInfo,
               maxGuests: metadata.maxGuests,
@@ -131,7 +149,7 @@ export default function PropertyGallery() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [locale]);
 
   return (
     <>

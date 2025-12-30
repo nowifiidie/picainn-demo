@@ -24,6 +24,20 @@ interface RoomImages {
     name: string;
     type: string;
     description: string;
+    descriptionI18n?: {
+      en?: string;
+      zh?: string;
+      'zh-TW'?: string;
+      ko?: string;
+      th?: string;
+      es?: string;
+      fr?: string;
+      id?: string;
+      ar?: string;
+      de?: string;
+      vi?: string;
+      my?: string;
+    };
     amenities: string[];
     bedInfo: string;
     maxGuests: number;
@@ -87,6 +101,7 @@ export async function GET() {
                 name: metadata.name,
                 type: metadata.type,
                 description: metadata.description,
+                descriptionI18n: metadata.descriptionI18n,
                 amenities: metadata.amenities,
                 bedInfo: metadata.bedInfo,
                 maxGuests: metadata.maxGuests,
@@ -108,6 +123,7 @@ export async function GET() {
                 name: metadata.name,
                 type: metadata.type,
                 description: metadata.description,
+                descriptionI18n: metadata.descriptionI18n,
                 amenities: metadata.amenities,
                 bedInfo: metadata.bedInfo,
                 maxGuests: metadata.maxGuests,

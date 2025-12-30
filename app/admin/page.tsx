@@ -14,11 +14,40 @@ const PRESET_AMENITIES = [
   { name: 'Private Bathroom', icon: Home },
 ];
 
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'zh', name: '简体中文 (Simplified Chinese)' },
+  { code: 'zh-TW', name: '繁體中文 (Traditional Chinese)' },
+  { code: 'ko', name: '한국어 (Korean)' },
+  { code: 'th', name: 'ไทย (Thai)' },
+  { code: 'es', name: 'Español (Spanish)' },
+  { code: 'fr', name: 'Français (French)' },
+  { code: 'id', name: 'Bahasa Indonesia (Indonesian)' },
+  { code: 'ar', name: 'العربية (Arabic)' },
+  { code: 'de', name: 'Deutsch (German)' },
+  { code: 'vi', name: 'Tiếng Việt (Vietnamese)' },
+  { code: 'my', name: 'မြန်မာ (Myanmar)' },
+];
+
 interface RoomDisplay {
   roomId: string;
   name: string;
   type?: string;
   description: string;
+  descriptionI18n?: {
+    en?: string;
+    zh?: string;
+    'zh-TW'?: string;
+    ko?: string;
+    th?: string;
+    es?: string;
+    fr?: string;
+    id?: string;
+    ar?: string;
+    de?: string;
+    vi?: string;
+    my?: string;
+  };
   image: string;
   maxGuests: number;
   size: string;
@@ -302,6 +331,7 @@ export default function AdminPage() {
               name: roomFromAPI.metadata.name,
               type: roomFromAPI.metadata.type,
               description: roomFromAPI.metadata.description,
+              descriptionI18n: roomFromAPI.metadata.descriptionI18n,
               amenities: roomFromAPI.metadata.amenities,
               bedInfo: roomFromAPI.metadata.bedInfo,
               maxGuests: roomFromAPI.metadata.maxGuests,
@@ -323,6 +353,8 @@ export default function AdminPage() {
         ...room,
         // Add ALL fields from metadata to ensure form is fully populated
         type: fullMetadata.type || room.type,
+        description: fullMetadata.description || room.description,
+        descriptionI18n: fullMetadata.descriptionI18n || room.descriptionI18n,
         maxGuests: fullMetadata.maxGuests || room.maxGuests,
         size: fullMetadata.size || room.size,
         bedInfo: fullMetadata.bedInfo,
@@ -718,6 +750,7 @@ export default function AdminPage() {
             name: metadata.name,
             type: metadata.type,
             description: metadata.description,
+            descriptionI18n: metadata.descriptionI18n,
             image: imageUrl,
             maxGuests: metadata.maxGuests,
             size: metadata.size,
@@ -1101,16 +1134,41 @@ export default function AdminPage() {
 
                 <div>
                   <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
-                    Description *
+                    Description (Fallback - for backward compatibility) *
                   </label>
                   <textarea
                     id="edit-description"
                     name="description"
                     defaultValue={editingRoom.description}
                     required
-                    rows={4}
+                    rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
                   />
+                  <p className="mt-1 text-xs text-gray-500">This is used as a fallback if translations are missing</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Room Description (Multi-language) *
+                  </label>
+                  <div className="space-y-4">
+                    {SUPPORTED_LANGUAGES.map((lang) => (
+                      <div key={lang.code}>
+                        <label htmlFor={`edit-description-${lang.code}`} className="block text-xs font-medium text-gray-600 mb-1">
+                          {lang.name}
+                        </label>
+                        <textarea
+                          id={`edit-description-${lang.code}`}
+                          name={`descriptionI18n-${lang.code}`}
+                          defaultValue={editingRoom.descriptionI18n?.[lang.code as keyof typeof editingRoom.descriptionI18n] || ''}
+                          rows={3}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent text-sm"
+                          placeholder={`Enter description in ${lang.name}...`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">At least one language description is recommended. The fallback description will be used if a translation is missing.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1520,16 +1578,40 @@ export default function AdminPage() {
 
             <div>
               <label htmlFor="room-description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
+                Description (Fallback - for backward compatibility) *
               </label>
               <textarea
                 id="room-description"
                 name="description"
                 required
-                rows={4}
+                rows={3}
                 className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                placeholder="Describe the room..."
+                placeholder="Describe the room (fallback)..."
               />
+              <p className="mt-1 text-xs text-gray-500">This is used as a fallback if translations are missing</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Room Description (Multi-language) *
+              </label>
+              <div className="space-y-4">
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <div key={lang.code}>
+                    <label htmlFor={`room-description-${lang.code}`} className="block text-xs font-medium text-gray-600 mb-1">
+                      {lang.name}
+                    </label>
+                    <textarea
+                      id={`room-description-${lang.code}`}
+                      name={`descriptionI18n-${lang.code}`}
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent text-sm"
+                      placeholder={`Enter description in ${lang.name}...`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-gray-500">At least one language description is recommended. The fallback description will be used if a translation is missing.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

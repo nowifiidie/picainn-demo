@@ -56,6 +56,16 @@ export async function POST(request: NextRequest) {
     const altTextZh = formData.get('altTextZh') as string;
     // Get multiple images
     const images = formData.getAll('images') as File[];
+    
+    // Build descriptionI18n object from form data
+    const descriptionI18n: Record<string, string> = {};
+    const supportedLanguages = ['en', 'zh', 'zh-TW', 'ko', 'th', 'es', 'fr', 'id', 'ar', 'de', 'vi', 'my'];
+    for (const lang of supportedLanguages) {
+      const value = formData.get(`descriptionI18n-${lang}`) as string;
+      if (value && value.trim()) {
+        descriptionI18n[lang] = value.trim();
+      }
+    }
 
     if (!name || !type || !description || !bedInfo || !maxGuests || !size || !address || !mapUrl || !images || images.length === 0) {
       return NextResponse.json(
@@ -177,6 +187,7 @@ export async function POST(request: NextRequest) {
       name,
       type,
       description,
+      descriptionI18n: Object.keys(descriptionI18n).length > 0 ? descriptionI18n : undefined,
       amenities: amenitiesArray.length > 0 ? amenitiesArray : ['Wi-Fi', 'Private Bathroom'],
       bedInfo,
       maxGuests: parseInt(maxGuests) || 2,

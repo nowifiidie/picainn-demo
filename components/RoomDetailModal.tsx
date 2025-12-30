@@ -3,7 +3,20 @@
 import { useState, useEffect } from 'react';
 import { X, Bed, Users, Wifi, Home, Utensils, Wind, Tv, Refrigerator, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+
+// Helper function to get translated description
+function getTranslatedDescription(
+  description: string,
+  descriptionI18n?: Record<string, string>,
+  locale?: string
+): string {
+  if (descriptionI18n && locale && descriptionI18n[locale]) {
+    return descriptionI18n[locale];
+  }
+  // Fallback to default description
+  return description;
+}
 
 interface RoomDetailModalProps {
   room: {
