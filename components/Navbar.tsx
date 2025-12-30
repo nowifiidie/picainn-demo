@@ -9,7 +9,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: '#gallery', label: 'Gallery' },
+    { href: '#gallery', label: 'Room' },
     { href: '#location', label: 'Location' },
     { href: '#inquiry', label: 'Inquiry' },
   ];
@@ -31,8 +31,11 @@ export default function Navbar() {
                 unoptimized
               />
             </Link>
+          </div>
 
-            {/* Desktop Navigation - moved to left with logo */}
+          {/* Right side: Desktop Navigation and Mobile Menu Button */}
+          <div className="flex items-center">
+            {/* Desktop Navigation - moved to right */}
             <div className="hidden md:flex items-center gap-6">
               {navLinks.map((link) => (
                 <Link
@@ -44,17 +47,17 @@ export default function Navbar() {
                 </Link>
               ))}
             </div>
-          </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={mobileMenuOpen}
-            className="md:hidden text-[#333333]"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
+              className="md:hidden text-[#333333]"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
