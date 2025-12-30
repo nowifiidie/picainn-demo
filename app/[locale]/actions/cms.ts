@@ -29,8 +29,9 @@ export async function updateHero(formData: FormData) {
     // Update CMS config timestamp
     await updateCMSConfig('hero');
 
-    // Revalidate the home page
-    revalidatePath('/');
+    // Revalidate the home page for all locales
+    revalidatePath('/en');
+    revalidatePath('/zh');
 
     return { success: true, message: 'Hero image updated successfully' };
   } catch (error) {
@@ -165,8 +166,9 @@ export async function addRoom(formData: FormData) {
     // Update CMS config timestamp
     await updateCMSConfig('rooms');
 
-    // Revalidate the home page
-    revalidatePath('/');
+    // Revalidate the home page for all locales
+    revalidatePath('/en');
+    revalidatePath('/zh');
 
     return { 
       success: true, 
@@ -336,8 +338,9 @@ export async function updateRoom(formData: FormData) {
     // Update CMS config timestamp
     await updateCMSConfig('rooms');
 
-    // Revalidate the home page
-    revalidatePath('/');
+    // Revalidate the home page for all locales
+    revalidatePath('/en');
+    revalidatePath('/zh');
 
     return { 
       success: true, 

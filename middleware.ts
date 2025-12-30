@@ -1,7 +1,11 @@
+import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
+import { routing } from '@/src/i18n/routing';
+
+const intlMiddleware = createMiddleware(routing);
 
 export function middleware(request: NextRequest) {
-  // Only protect /admin routes
+  // Handle admin routes with authentication first
   if (request.nextUrl.pathname.startsWith('/admin')) {
     const authHeader = request.headers.get('authorization');
 
@@ -42,10 +46,12 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  // Apply next-intl middleware for all other routes
+  return intlMiddleware(request);
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  // Match only internationalized pathnames and admin routes
+  matcher: ['/', '/(zh|en)/:path*', '/admin/:path*']
 };
 
