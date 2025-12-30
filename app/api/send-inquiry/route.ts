@@ -93,17 +93,26 @@ Please contact the guest via their preferred method: ${contactApp}
       try {
         // Initialize Resend only when needed and when API key is available
         const resend = new Resend(process.env.RESEND_API_KEY);
-        await resend.emails.send({
+        const emailResult = await resend.emails.send({
           from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
           to: process.env.CONTACT_EMAIL || 'info@minpaku.com',
           subject: emailSubject,
           html: htmlEmailBody,
           replyTo: email, // So you can reply directly to the customer
         });
+        
+        console.log('Email sent successfully:', emailResult);
       } catch (emailError) {
         console.error('Error sending email via Resend:', emailError);
-        // Fall through to mailto option
+        // Log the full error for debugging
+        if (emailError instanceof Error) {
+          console.error('Email error details:', emailError.message, emailError.stack);
+        }
+        // Still return success to user, but log the error for admin
+        // You might want to change this to return an error if email is critical
       }
+    } else {
+      console.warn('RESEND_API_KEY is not set. Email will not be sent.');
     }
 
     return NextResponse.json({ 

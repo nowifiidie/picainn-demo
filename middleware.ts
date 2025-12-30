@@ -7,6 +7,11 @@ const intlMiddleware = createMiddleware(routing);
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Exclude API routes from locale routing
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
   // Redirect locale-prefixed admin routes to /admin (e.g., /zh/admin -> /admin)
   if (pathname.match(/^\/(en|zh|zh-TW|ko|th|es|fr|id|ar|de|vi|my)\/admin/)) {
     const url = request.nextUrl.clone();
