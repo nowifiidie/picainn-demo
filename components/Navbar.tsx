@@ -22,7 +22,17 @@ export default function Navbar() {
 
   const languages = [
     { code: 'en', name: 'English' },
-    { code: 'zh', name: '中文' },
+    { code: 'zh-TW', name: '繁體中文' },
+    { code: 'zh', name: '简体中文' },
+    { code: 'ko', name: '한국어' },
+    { code: 'es', name: 'Español' },
+    { code: 'fr', name: 'Français' },
+    { code: 'de', name: 'Deutsch' },
+    { code: 'id', name: 'Bahasa Indonesia' },
+    { code: 'th', name: 'ไทย' },
+    { code: 'ar', name: 'العربية' },
+    { code: 'vi', name: 'Tiếng Việt' },
+    { code: 'my', name: 'မြန်မာ' },
   ];
 
   const handleLanguageChange = (locale: string) => {
@@ -86,7 +96,7 @@ export default function Navbar() {
                     onClick={() => setLanguageMenuOpen(false)}
                   />
                   {/* Dropdown Menu */}
-                  <div className="absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg border border-gray-200 z-20">
+                  <div className="absolute right-0 mt-2 w-48 max-h-96 overflow-y-auto bg-white rounded-md shadow-lg border border-gray-200 z-20">
                     {languages.map((lang) => (
                       <button
                         key={lang.code}

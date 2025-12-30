@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Redirect locale-prefixed admin routes to /admin (e.g., /zh/admin -> /admin)
-  if (pathname.match(/^\/(zh|en)\/admin/)) {
+  if (pathname.match(/^\/(en|zh|zh-TW|ko|th|es|fr|id|ar|de|vi|my)\/admin/)) {
     const url = request.nextUrl.clone();
     url.pathname = '/admin';
     return NextResponse.redirect(url);
@@ -64,6 +64,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   // Match only internationalized pathnames and admin routes
-  matcher: ['/', '/(zh|en)/:path*', '/admin/:path*']
+  matcher: ['/', '/(en|zh|zh-TW|ko|th|es|fr|id|ar|de|vi|my)/:path*', '/admin/:path*']
 };
 
