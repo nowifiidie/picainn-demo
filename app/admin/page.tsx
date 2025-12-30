@@ -86,7 +86,14 @@ export default function AdminPage() {
         form.reset();
         setHeroImageExists(true);
         if (result.url) {
+          console.log('Hero image uploaded, new URL:', result.url);
           setHeroImageUrl(result.url);
+          // Force a page refresh on the homepage to show new image
+          // This is a workaround until the config file update propagates
+          setTimeout(() => {
+            // Trigger a custom event that the Hero component can listen to
+            window.dispatchEvent(new CustomEvent('heroImageUpdated', { detail: { url: result.url } }));
+          }, 500);
         }
       }
     } catch (error) {

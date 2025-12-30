@@ -50,7 +50,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Update CMS config with new URL and timestamp
-    await updateCMSConfig('hero', url);
+    const configUpdateResult = await updateCMSConfig('hero', url);
+    if (!configUpdateResult) {
+      console.error('Failed to update CMS config file');
+      // Still return success since image was uploaded, but log the error
+    }
 
     // Revalidate the home page for all locales
     revalidatePath('/en');
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function updateCMSConfig(type: 'hero' | 'rooms', heroImageUrl?: string) {
+async function updateCMSConfig(type: 'hero' | 'rooms', heroImageUrl?: string): Promise<boolean> {
   try {
     const configPath = join(process.cwd(), 'lib', 'rooms.ts');
     const configContent = await readFile(configPath, 'utf-8');
@@ -174,9 +178,13 @@ async function updateCMSConfig(type: 'hero' | 'rooms', heroImageUrl?: string) {
       }
       
       await writeFile(configPath, updatedContent, 'utf-8');
+      console.log(`Successfully updated CMS config: ${type}${heroImageUrl ? ` with URL: ${heroImageUrl}` : ''}`);
+      return true;
     }
   } catch (error) {
     console.error('Error updating CMS config:', error);
+    return false;
   }
+  return true;
 }
 

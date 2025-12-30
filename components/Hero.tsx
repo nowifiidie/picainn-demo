@@ -21,7 +21,9 @@ export default function Hero() {
           }
         });
         const data = await response.json();
+        console.log('Hero image API response:', data);
         if (data.url) {
+          console.log('Setting hero image URL to:', data.url);
           setHeroImageUrl(data.url);
           if (data.timestamp) {
             setLastTimestamp(data.timestamp);
@@ -35,6 +37,15 @@ export default function Hero() {
 
     fetchHeroImage();
     
+    // Listen for hero image update events from admin page
+    const handleHeroImageUpdate = (event: CustomEvent) => {
+      if (event.detail?.url) {
+        console.log('Hero image update event received:', event.detail.url);
+        setHeroImageUrl(event.detail.url);
+        setLastTimestamp(Date.now());
+      }
+    };
+    
     // Refresh when page becomes visible again (user switches back to tab)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
@@ -42,9 +53,11 @@ export default function Hero() {
       }
     };
     
+    window.addEventListener('heroImageUpdated', handleHeroImageUpdate as EventListener);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
+      window.removeEventListener('heroImageUpdated', handleHeroImageUpdate as EventListener);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []); // Only run on mount and visibility change
