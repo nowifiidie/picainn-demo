@@ -1,4 +1,8 @@
 {
+  "brand": {
+    "siteName": "Picainn",
+    "siteTitle": "Picainn House"
+  },
   "welcome": "환영합니다",
   "nav": {
     "room": "객실",
@@ -12,7 +16,7 @@
     "noImage": "이미지 없음"
   },
   "hero": {
-    "title": "게스트하우스에 오신 것을 환영합니다",
+    "title": "Picainn Guesthouse에 오신 것을 환영합니다",
     "subtitle": "도쿄 중심에서 진정한 일본식 환대를 경험하세요",
     "checkAvailability": "예약 가능 여부 확인"
   },
@@ -130,8 +134,8 @@
   "footer": {
     "license": "주거 숙박 사업법 등록번호",
     "licenseNumber": "第M000000000号",
-    "copyright": "picainn. 모든 권리 보유.",
-    "companyName": "피카인 게스트하우스",
+    "copyright": "Picainn. 모든 권리 보유.",
+    "companyName": "Picainn Guesthouse",
     "address": "일본국 도쿄도 분쿄구 혼코마고메 5-55-3",
     "tel": "03-6638-6215",
     "fax": "03-6638-6217",

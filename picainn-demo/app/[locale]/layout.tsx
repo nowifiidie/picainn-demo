@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -5,6 +6,13 @@ import { routing } from '@/src/i18n/routing';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const messages = await getMessages();
+  const brand = (messages as { brand?: { siteTitle?: string } }).brand;
+  const title = brand?.siteTitle ?? 'Picainn House';
+  return { title };
 }
 
 export default async function LocaleLayout({

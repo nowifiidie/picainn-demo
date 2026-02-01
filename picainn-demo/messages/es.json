@@ -1,4 +1,8 @@
 {
+  "brand": {
+    "siteName": "Picainn",
+    "siteTitle": "Picainn House"
+  },
   "welcome": "Bienvenido",
   "nav": {
     "room": "Habitación",
@@ -12,7 +16,7 @@
     "noImage": "Sin imagen"
   },
   "hero": {
-    "title": "Bienvenido a Nuestra Casa de Huéspedes",
+    "title": "Bienvenido a Picainn Guesthouse",
     "subtitle": "Experimenta la auténtica hospitalidad japonesa en el corazón de Tokio",
     "checkAvailability": "Verificar Disponibilidad"
   },
@@ -130,7 +134,7 @@
   "footer": {
     "license": "Número de Licencia de la Ley de Negocios de Alojamiento Residencial",
     "licenseNumber": "第M000000000号",
-    "copyright": "picainn. Todos los derechos reservados.",
+    "copyright": "Picainn. Todos los derechos reservados.",
     "companyName": "Picainn Guesthouse",
     "address": "5-55-3 Hon-Komagome, Bunkyo-ku, Tokyo, Japan",
     "tel": "03-6638-6215",

@@ -1,4 +1,8 @@
 {
+  "brand": {
+    "siteName": "皮卡因",
+    "siteTitle": "皮卡因 名宿"
+  },
   "nav": {
     "gallery": "ギャラリー",
     "location": "場所",
@@ -8,7 +12,7 @@
     "title": "ギャラリー"
   },
   "hero": {
-    "title": "ゲストハウスへようこそ",
+    "title": "皮卡因名宿へようこそ",
     "subtitle": "東京の中心で本格的な日本のおもてなしをお楽しみください",
     "checkAvailability": "空室確認"
   },
@@ -45,7 +49,7 @@
   "footer": {
     "license": "住宅宿泊事業法登録番号",
     "licenseNumber": "第M000000000号",
-    "copyright": "picainn. All rights reserved.",
+    "copyright": "皮卡因. All rights reserved.",
     "companyName": "皮卡因名宿",
     "address": "日本国東京都文京区本駒込5-55-3",
     "tel": "03-6638-6215",

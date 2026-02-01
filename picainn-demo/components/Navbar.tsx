@@ -49,7 +49,7 @@ export default function Navbar() {
               {/* Full logo - no text needed */}
               <Image
                 src="/logo.png"
-                alt="picainn logo"
+                alt={`${t('brand.siteName')} logo`}
                 width={100}
                 height={100}
                 className="h-10 w-[150px] object-contain"
