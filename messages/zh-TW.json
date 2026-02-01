@@ -1,4 +1,8 @@
 {
+  "brand": {
+    "siteName": "皮卡因",
+    "siteTitle": "皮卡因 名宿"
+  },
   "welcome": "歡迎",
   "nav": {
     "room": "房間",
@@ -12,7 +16,7 @@
     "noImage": "無圖片"
   },
   "hero": {
-    "title": "歡迎來到我們的民宿",
+    "title": "歡迎來到皮卡因名宿",
     "subtitle": "在東京市中心體驗正宗的日式款待",
     "checkAvailability": "查看空房"
   },
@@ -130,7 +134,7 @@
   "footer": {
     "license": "住宅宿泊事業法登記號",
     "licenseNumber": "第M000000000号",
-    "copyright": "picainn. 版權所有。",
+    "copyright": "皮卡因. 版權所有。",
     "companyName": "皮卡因名宿",
     "address": "日本国東京都文京区本駒込5-55-3",
     "tel": "03-6638-6215",
