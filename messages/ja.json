@@ -1,0 +1,60 @@
+{
+  "brand": {
+    "siteName": "皮卡因",
+    "siteTitle": "皮卡因 名宿"
+  },
+  "nav": {
+    "gallery": "ギャラリー",
+    "location": "場所",
+    "inquiry": "お問い合わせ"
+  },
+  "gallery": {
+    "title": "ギャラリー"
+  },
+  "hero": {
+    "title": "皮卡因名宿へようこそ",
+    "subtitle": "東京の中心で本格的な日本のおもてなしをお楽しみください",
+    "checkAvailability": "空室確認"
+  },
+  "features": {
+    "shibuya": "渋谷駅から7分",
+    "wifi": "無料ポケットWi-Fi",
+    "support": "英語/中国語/韓国語対応",
+    "amenities": "キッチン・洗濯機"
+  },
+  "booking": {
+    "title": "ご予約",
+    "selectDates": "日付を選択",
+    "fullName": "お名前",
+    "email": "メールアドレス",
+    "guests": "宿泊人数",
+    "contactApp": "希望連絡方法",
+    "contactOptions": {
+      "whatsapp": "WhatsApp",
+      "line": "LINE",
+      "wechat": "WeChat",
+      "email": "メール"
+    },
+    "submit": "お問い合わせ送信",
+    "thankYou": "ありがとうございます！",
+    "thankYouMessage": "お問い合わせを受け付けました。ご希望の連絡方法でご連絡いたします。",
+    "close": "閉じる"
+  },
+  "localGuide": {
+    "title": "近くのおすすめ",
+    "convenience": "コンビニ",
+    "coffee": "コーヒー",
+    "izakaya": "居酒屋"
+  },
+  "footer": {
+    "license": "住宅宿泊事業法登録番号",
+    "licenseNumber": "第M000000000号",
+    "copyright": "皮卡因. All rights reserved.",
+    "companyName": "皮卡因名宿",
+    "address": "日本国東京都文京区本駒込5-55-3",
+    "tel": "03-6638-6215",
+    "fax": "03-6638-6217",
+    "email": "picainn@gmail.com"
+  }
+}
+

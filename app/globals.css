@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FAFAFA;
+  --foreground: #333333;
+  --accent: #8B7355;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-noto-sans-jp), sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-noto-sans-jp), sans-serif;
+}
+
+/* Prevent flickering and layout shifts */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optimize rendering and prevent flickering */
+section {
+  will-change: auto;
+  backface-visibility: hidden;
+  position: relative;
+}
+
+/* Prevent layout shifts */
+img, picture, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Prevent image flickering */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Smooth image loading */
+.next-image-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Custom scrollbar - hide on mobile to prevent visual artifacts */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #FAFAFA;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555555;
+  }
+}
+
+/* React Day Picker Custom Styles */
+.rdp {
+  --rdp-cell-size: 36px;
+  --rdp-accent-color: #8B7355;
+  --rdp-background-color: #FAFAFA;
+  --rdp-accent-color-dark: #8B7355;
+  --rdp-outline: 2px solid var(--rdp-accent-color);
+  --rdp-outline-selected: 2px solid var(--rdp-accent-color);
+  margin: 0;
+}
+
+.rdp-day_selected,
+.rdp-day_selected:focus-visible,
+.rdp-day_selected:hover {
+  color: white;
+  opacity: 1;
+  background-color: var(--rdp-accent-color);
+}
+
+.rdp-day_range_middle {
+  background-color: rgba(139, 115, 85, 0.1);
+  color: #333333;
+}

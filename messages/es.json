@@ -1,0 +1,145 @@
+{
+  "brand": {
+    "siteName": "Picainn",
+    "siteTitle": "Picainn House"
+  },
+  "welcome": "Bienvenido",
+  "nav": {
+    "room": "Habitación",
+    "location": "Ubicación",
+    "inquiry": "Consulta"
+  },
+  "gallery": {
+    "title": "Habitación",
+    "loadingRooms": "Cargando habitaciones...",
+    "noRoomsAvailable": "No hay habitaciones disponibles en este momento.",
+    "noImage": "Sin imagen"
+  },
+  "hero": {
+    "title": "Bienvenido a Picainn Guesthouse",
+    "subtitle": "Experimenta la auténtica hospitalidad japonesa en el corazón de Tokio",
+    "checkAvailability": "Verificar Disponibilidad"
+  },
+  "features": {
+    "shibuya": "7 minutos de la Estación de Shibuya",
+    "wifi": "Wi-Fi Portátil Gratis",
+    "support": "Soporte en Inglés/Chino/Coreano",
+    "amenities": "Cocina y Lavandería"
+  },
+  "booking": {
+    "title": "Reserva Tu Estancia",
+    "selectDates": "Seleccionar Fechas",
+    "fullName": "Nombre Completo",
+    "email": "Correo Electrónico",
+    "guests": "Número de Huéspedes",
+    "selectRoomType": "Seleccionar Tipo de Habitación",
+    "loadingRooms": "Cargando habitaciones...",
+    "pleaseSelectRoom": "Por favor seleccione una habitación",
+    "contactApp": "Aplicación de Contacto Preferida",
+    "contactOptions": {
+      "whatsapp": "WhatsApp",
+      "line": "LINE",
+      "wechat": "WeChat",
+      "email": "Correo Electrónico"
+    },
+    "submit": "Enviar Consulta",
+    "sending": "Enviando...",
+    "thankYou": "¡Gracias!",
+    "thankYouMessage": "Hemos recibido su consulta. Nos pondremos en contacto con usted a través de su aplicación preferida para finalizar su reserva.",
+    "close": "Cerrar",
+    "error": "Error al enviar la consulta. Por favor intente nuevamente.",
+    "errorGeneric": "Ocurrió un error. Por favor intente nuevamente."
+  },
+  "localGuide": {
+    "title": "Favoritos Cercanos",
+    "convenience": "Tienda de Conveniencia",
+    "coffee": "Café",
+    "izakaya": "Izakaya",
+    "viewOnGoogleMaps": "Ver en Google Maps"
+  },
+  "aboutSpace": {
+    "title": "Acerca de Este Espacio",
+    "features": {
+      "location": {
+        "title": "Ubicación",
+        "description": "5 minutos a pie de la Estación de Komagome (Línea JR Yamanote y Metro Namboku). Llegue a Asakusa, Tokyo Skytree, Ginza, Santuario Meiji Jingu y Palacio Imperial en 20 minutos."
+      },
+      "safety": {
+        "title": "Seguridad",
+        "description": "Ubicado en la segura ciudad de Tokio, todo el edificio está equipado con cámaras de vigilancia para la seguridad de nuestros huéspedes."
+      },
+      "wifi": {
+        "title": "Wi-Fi Portátil Gratis",
+        "description": "Dispositivo Wi-Fi portátil gratuito disponible para todos los huéspedes durante su estancia."
+      },
+      "multilingual": {
+        "title": "Soporte Multilingüe",
+        "description": "Soporte en inglés, chino y japonés disponible para su conveniencia."
+      },
+      "hotSprings": {
+        "title": "Aguas Termales",
+        "description": "Baño público a 5 minutos a pie. Famoso manantial termal natural \"Tokyo Shinjuku Onsen Sakura\" cerca de la Estación de Sugamo (adyacente a la Estación de Komagome)."
+      },
+      "theRoom": {
+        "title": "La Habitación",
+        "description": "Equipada con nevera, ollas, TV, aire acondicionado, inodoro y ducha. Ideal para un grupo de 2.",
+        "details": "1 cama doble (140 cm x 200 cm) + 2 futones individuales (150 cm x 210 cm) + 2 almohadas"
+      },
+      "transportation": {
+        "title": "Transporte",
+        "description": "Fácil acceso desde los aeropuertos de Haneda y Narita. Ascensores disponibles en las salidas sur y este de la Estación de Komagome. Nuestra casa tiene ascensor para facilitar el manejo del equipaje."
+      },
+      "nearbyAttractions": {
+        "title": "Atracciones Cercanas",
+        "description": "Zona residencial tranquila con calle comercial a 2 minutos. Parque Rikugien (5 min a pie), Universidad de Tokio y Korakuen (20 min a pie). Restaurantes cercanos: ramen, sushi, tempura, soba, takoyaki, yakitori, anguila, yakiniku y tiendas de confitería japonesa."
+      },
+      "shopping": {
+        "title": "Compras y Conveniencia",
+        "description": "Distrito comercial cerca de la salida este de la Estación de Komagome: tiendas de conveniencia 24 horas, supermercados (abiertos hasta la 1 am), Doutor Coffee, farmacias, tiendas de bento, tiendas de ramen (abiertas hasta las 5 am) y panaderías a precios razonables."
+      },
+      "commonAreas": {
+        "title": "Áreas Comunes",
+        "description": "Área común de la planta baja equipada con lavadora y microondas."
+      }
+    },
+    "houseRules": {
+      "title": "Reglas de la Casa",
+      "rule1": "Por favor mantenga limpio, no haga ruido, salte en la habitación o afecte a otros hogares, ya que los japoneses son muy sensibles al sonido y nuestra área es especialmente tranquila.",
+      "rule2": "Al salir de la habitación, asegúrese de apagar el aire acondicionado, el agua y el gas para mantener la habitación limpia.",
+      "rule3": "Para mantener su privacidad y tranquilidad, por favor use solo Airbnb Message para la comunicación."
+    },
+    "perfectFor": "Excelente para parejas, estudiantes, grupos y viajeros de negocios."
+  },
+  "roomDetail": {
+    "maxGuests": "Huéspedes Máximos",
+    "bedding": "Ropa de Cama",
+    "included": "Incluido",
+    "roomSize": "Tamaño de la Habitación",
+    "bedAndBedding": "Cama y Ropa de Cama",
+    "amenities": "Comodidades",
+    "location": "Ubicación",
+    "bookThisRoom": "Reservar Esta Habitación",
+    "closeRoomDetails": "Cerrar detalles de la habitación",
+    "previousImage": "Imagen anterior",
+    "nextImage": "Imagen siguiente",
+    "goToImage": "Ir a la imagen"
+  },
+  "social": {
+    "scanQRCode": "Escanear Código QR de {platform}",
+    "scanToConnect": "Escanee este código para conectarse con nosotros en {platform}",
+    "line": "LINE",
+    "wechat": "WeChat",
+    "xiaohongshu": "XiaoHongShu"
+  },
+  "footer": {
+    "license": "Número de Licencia de la Ley de Negocios de Alojamiento Residencial",
+    "licenseNumber": "第M000000000号",
+    "copyright": "Picainn. Todos los derechos reservados.",
+    "companyName": "Picainn Guesthouse",
+    "address": "5-55-3 Hon-Komagome, Bunkyo-ku, Tokyo, Japan",
+    "tel": "03-6638-6215",
+    "fax": "03-6638-6217",
+    "email": "picainn@gmail.com"
+  }
+}
+

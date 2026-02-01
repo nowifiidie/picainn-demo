@@ -1,0 +1,145 @@
+{
+  "brand": {
+    "siteName": "Picainn",
+    "siteTitle": "Picainn House"
+  },
+  "welcome": "Chào mừng",
+  "nav": {
+    "room": "Phòng",
+    "location": "Vị trí",
+    "inquiry": "Yêu cầu"
+  },
+  "gallery": {
+    "title": "Phòng",
+    "loadingRooms": "Đang tải phòng...",
+    "noRoomsAvailable": "Hiện không có phòng trống.",
+    "noImage": "Không có hình ảnh"
+  },
+  "hero": {
+    "title": "Chào mừng đến Picainn Guesthouse",
+    "subtitle": "Trải nghiệm sự hiếu khách Nhật Bản chân thực tại trung tâm Tokyo",
+    "checkAvailability": "Kiểm tra Tình trạng Phòng"
+  },
+  "features": {
+    "shibuya": "7 phút từ Ga Shibuya",
+    "wifi": "Wi-Fi Di động Miễn phí",
+    "support": "Hỗ trợ Tiếng Anh/Trung/Hàn",
+    "amenities": "Bếp & Giặt ủi"
+  },
+  "booking": {
+    "title": "Đặt Phòng của Bạn",
+    "selectDates": "Chọn Ngày",
+    "fullName": "Họ và Tên",
+    "email": "Email",
+    "guests": "Số Lượng Khách",
+    "selectRoomType": "Chọn Loại Phòng",
+    "loadingRooms": "Đang tải phòng...",
+    "pleaseSelectRoom": "Vui lòng chọn phòng",
+    "contactApp": "Ứng dụng Liên hệ Ưu tiên",
+    "contactOptions": {
+      "whatsapp": "WhatsApp",
+      "line": "LINE",
+      "wechat": "WeChat",
+      "email": "Email"
+    },
+    "submit": "Gửi Yêu cầu",
+    "sending": "Đang gửi...",
+    "thankYou": "Cảm ơn bạn!",
+    "thankYouMessage": "Chúng tôi đã nhận được yêu cầu của bạn. Chúng tôi sẽ liên hệ với bạn qua ứng dụng ưu tiên để hoàn tất đặt phòng.",
+    "close": "Đóng",
+    "error": "Gửi yêu cầu thất bại. Vui lòng thử lại.",
+    "errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại."
+  },
+  "localGuide": {
+    "title": "Địa điểm Yêu thích Gần đây",
+    "convenience": "Cửa hàng Tiện lợi",
+    "coffee": "Cà phê",
+    "izakaya": "Izakaya",
+    "viewOnGoogleMaps": "Xem trên Google Maps"
+  },
+  "aboutSpace": {
+    "title": "Về Không gian Này",
+    "features": {
+      "location": {
+        "title": "Vị trí",
+        "description": "5 phút đi bộ từ Ga Komagome (Tuyến JR Yamanote & Tàu điện ngầm Namboku). Đến Asakusa, Tokyo Skytree, Ginza, Đền Meiji Jingu và Hoàng cung trong 20 phút."
+      },
+      "safety": {
+        "title": "An toàn",
+        "description": "Nằm ở thành phố Tokyo an toàn, toàn bộ tòa nhà được trang bị camera giám sát để đảm bảo an toàn cho khách."
+      },
+      "wifi": {
+        "title": "Wi-Fi Di động Miễn phí",
+        "description": "Thiết bị Wi-Fi di động miễn phí có sẵn cho tất cả khách trong thời gian lưu trú."
+      },
+      "multilingual": {
+        "title": "Hỗ trợ Đa ngôn ngữ",
+        "description": "Hỗ trợ tiếng Anh, Trung và Nhật có sẵn để tiện lợi cho bạn."
+      },
+      "hotSprings": {
+        "title": "Suối nước nóng",
+        "description": "Nhà tắm công cộng cách 5 phút đi bộ. Suối nước nóng thiên nhiên nổi tiếng \"Tokyo Shinjuku Onsen Sakura\" gần Ga Sugamo (liền kề Ga Komagome)."
+      },
+      "theRoom": {
+        "title": "Phòng",
+        "description": "Trang bị tủ lạnh, nồi, TV, điều hòa, nhà vệ sinh và phòng tắm. Lý tưởng cho nhóm 2 người.",
+        "details": "1 giường đôi (140 cm x 200 cm) + 2 đệm futon đơn (150 cm x 210 cm) + 2 gối"
+      },
+      "transportation": {
+        "title": "Giao thông",
+        "description": "Dễ dàng tiếp cận từ sân bay Haneda và Narita. Thang máy có sẵn tại cả lối ra phía nam và phía đông của Ga Komagome. Nhà chúng tôi có thang máy để dễ dàng xử lý hành lý."
+      },
+      "nearbyAttractions": {
+        "title": "Điểm tham quan Gần đây",
+        "description": "Khu dân cư yên tĩnh với phố mua sắm trong vòng 2 phút. Công viên Rikugien (5 phút đi bộ), Đại học Tokyo và Korakuen (20 phút đi bộ). Nhà hàng gần đây: ramen, sushi, tempura, soba, takoyaki, yakitori, lươn, yakiniku và cửa hàng bánh kẹo Nhật Bản."
+      },
+      "shopping": {
+        "title": "Mua sắm & Tiện ích",
+        "description": "Khu mua sắm gần lối ra phía đông Ga Komagome: cửa hàng tiện lợi 24 giờ, siêu thị (mở đến 1 giờ sáng), Doutor Coffee, hiệu thuốc, cửa hàng bento, cửa hàng ramen (mở đến 5 giờ sáng) và tiệm bánh với giá hợp lý."
+      },
+      "commonAreas": {
+        "title": "Khu vực Chung",
+        "description": "Khu vực chung tầng trệt được trang bị máy giặt và lò vi sóng."
+      }
+    },
+    "houseRules": {
+      "title": "Nội quy Nhà",
+      "rule1": "Vui lòng giữ sạch sẽ, không gây tiếng ồn, nhảy trong phòng hoặc ảnh hưởng đến các hộ gia đình khác, vì người Nhật rất nhạy cảm với âm thanh và khu vực của chúng tôi đặc biệt yên tĩnh.",
+      "rule2": "Khi rời phòng, hãy đảm bảo tắt điều hòa, nước và gas để giữ phòng sạch sẽ.",
+      "rule3": "Để duy trì quyền riêng tư và sự yên tâm của bạn, vui lòng chỉ sử dụng Airbnb Message để giao tiếp."
+    },
+    "perfectFor": "Tuyệt vời cho các cặp đôi, sinh viên, nhóm và khách du lịch công vụ."
+  },
+  "roomDetail": {
+    "maxGuests": "Số Khách Tối đa",
+    "bedding": "Chăn ga gối",
+    "included": "Bao gồm",
+    "roomSize": "Kích thước Phòng",
+    "bedAndBedding": "Giường & Chăn ga gối",
+    "amenities": "Tiện ích",
+    "location": "Vị trí",
+    "bookThisRoom": "Đặt Phòng Này",
+    "closeRoomDetails": "Đóng chi tiết phòng",
+    "previousImage": "Hình ảnh trước",
+    "nextImage": "Hình ảnh tiếp theo",
+    "goToImage": "Đi đến hình ảnh"
+  },
+  "social": {
+    "scanQRCode": "Quét Mã QR {platform}",
+    "scanToConnect": "Quét mã này để kết nối với chúng tôi trên {platform}",
+    "line": "LINE",
+    "wechat": "WeChat",
+    "xiaohongshu": "XiaoHongShu"
+  },
+  "footer": {
+    "license": "Số Giấy phép Luật Kinh doanh Lưu trú Dân cư",
+    "licenseNumber": "第M000000000号",
+    "copyright": "Picainn. Bảo lưu mọi quyền.",
+    "companyName": "Picainn Guesthouse",
+    "address": "5-55-3 Hon-Komagome, Bunkyo-ku, Tokyo, Japan",
+    "tel": "03-6638-6215",
+    "fax": "03-6638-6217",
+    "email": "picainn@gmail.com"
+  }
+}
+
