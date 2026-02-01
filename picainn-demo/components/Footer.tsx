@@ -8,15 +8,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#333333] text-white py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <p className="text-sm text-gray-300 mb-2">
-            {t('footer.license')}
-          </p>
-          <p className="text-lg font-medium">
-            {t('footer.licenseNumber')}
-          </p>
-        </div>
-        <div className="mt-6 text-center text-sm text-gray-300">
+        <div className="text-center text-sm text-gray-300">
           <p className="font-medium text-white">{t('footer.companyName')}</p>
           <p className="mt-1">{t('footer.address')}</p>
           <p className="mt-1">
