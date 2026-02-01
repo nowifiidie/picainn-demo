@@ -1,0 +1,141 @@
+{
+  "welcome": "欢迎",
+  "nav": {
+    "room": "房间",
+    "location": "位置",
+    "inquiry": "咨询"
+  },
+  "gallery": {
+    "title": "房间",
+    "loadingRooms": "加载房间中...",
+    "noRoomsAvailable": "目前没有可用的房间。",
+    "noImage": "无图片"
+  },
+  "hero": {
+    "title": "欢迎来到我们的民宿",
+    "subtitle": "在东京市中心体验正宗的日式款待",
+    "checkAvailability": "查看空房"
+  },
+  "features": {
+    "shibuya": "距离涩谷站7分钟",
+    "wifi": "免费便携Wi-Fi",
+    "support": "英语/中文/韩语支持",
+    "amenities": "厨房和洗衣"
+  },
+  "booking": {
+    "title": "预订住宿",
+    "selectDates": "选择日期",
+    "fullName": "全名",
+    "email": "电子邮件",
+    "guests": "客人数量",
+    "selectRoomType": "选择房间类型",
+    "loadingRooms": "加载房间中...",
+    "pleaseSelectRoom": "请选择房间",
+    "contactApp": "首选联系方式",
+    "contactOptions": {
+      "whatsapp": "WhatsApp",
+      "line": "LINE",
+      "wechat": "微信",
+      "email": "电子邮件"
+    },
+    "submit": "提交咨询",
+    "sending": "发送中...",
+    "thankYou": "谢谢！",
+    "thankYouMessage": "我们已收到您的咨询。我们将通过您首选的联系方式与您联系以完成预订。",
+    "close": "关闭",
+    "error": "提交咨询失败，请重试。",
+    "errorGeneric": "发生错误，请重试。"
+  },
+  "localGuide": {
+    "title": "附近推荐",
+    "convenience": "便利店",
+    "coffee": "咖啡",
+    "izakaya": "居酒屋",
+    "viewOnGoogleMaps": "在Google地图上查看"
+  },
+  "aboutSpace": {
+    "title": "关于此空间",
+    "features": {
+      "location": {
+        "title": "位置",
+        "description": "距离驹込站（JR山手线和南北线）步行5分钟。20分钟内可到达浅草、东京晴空塔、银座、明治神宫和皇居。"
+      },
+      "safety": {
+        "title": "安全",
+        "description": "位于安全的东京市，整栋建筑都配备了监控摄像头，以确保客人的安全。"
+      },
+      "wifi": {
+        "title": "免费便携Wi-Fi",
+        "description": "住宿期间为所有客人提供免费便携Wi-Fi设备。"
+      },
+      "multilingual": {
+        "title": "多语言支持",
+        "description": "提供英语、中文和日语支持，方便您的使用。"
+      },
+      "hotSprings": {
+        "title": "温泉",
+        "description": "步行5分钟即可到达公共浴场。著名的天然温泉\"东京新宿温泉樱花\"位于巢鸭站附近（与驹込站相邻）。"
+      },
+      "theRoom": {
+        "title": "房间",
+        "description": "配备冰箱、锅具、电视、空调、卫生间和淋浴间。适合2人团体。",
+        "details": "1张双人床（140厘米 x 200厘米）+ 2张单人日式床垫（150厘米 x 210厘米）+ 2个枕头"
+      },
+      "transportation": {
+        "title": "交通",
+        "description": "从羽田和成田机场交通便利。驹込站南出口和东出口都有电梯。我们的房子有电梯，方便行李搬运。"
+      },
+      "nearbyAttractions": {
+        "title": "附近景点",
+        "description": "安静的住宅区，2分钟内就有购物街。六义园（步行5分钟）、东京大学和小石川后乐园（步行20分钟）。附近餐饮：拉面、寿司、天妇罗、荞麦面、章鱼烧、烤鸡肉串、鳗鱼、烤肉和日式点心店。"
+      },
+      "shopping": {
+        "title": "购物与便利",
+        "description": "驹込站东出口附近的购物区：24小时便利店、超市（营业至凌晨1点）、Doutor咖啡、药妆店、便当店、拉面店（营业至凌晨5点）和价格合理的面包店。"
+      },
+      "commonAreas": {
+        "title": "公共区域",
+        "description": "一楼公共区域配备洗衣机和微波炉。"
+      }
+    },
+    "houseRules": {
+      "title": "房屋规则",
+      "rule1": "请保持清洁，不要制造噪音、在房间内跳跃或影响其他住户，因为日本人对声音非常敏感，我们的区域特别安静。",
+      "rule2": "离开房间时，请务必关闭空调、水和煤气，以保持房间清洁。",
+      "rule3": "为维护您的隐私和安心，请仅使用Airbnb消息进行沟通。"
+    },
+    "perfectFor": "非常适合情侣、学生、团体和商务旅行者。"
+  },
+  "roomDetail": {
+    "maxGuests": "最大客人",
+    "bedding": "床上用品",
+    "included": "包含",
+    "roomSize": "房间大小",
+    "bedAndBedding": "床和床上用品",
+    "amenities": "设施",
+    "location": "位置",
+    "bookThisRoom": "预订此房间",
+    "closeRoomDetails": "关闭房间详情",
+    "previousImage": "上一张图片",
+    "nextImage": "下一张图片",
+    "goToImage": "转到图片"
+  },
+  "social": {
+    "scanQRCode": "扫描{platform}二维码",
+    "scanToConnect": "扫描此代码以在{platform}上与我们联系",
+    "line": "LINE",
+    "wechat": "微信",
+    "xiaohongshu": "小红书"
+  },
+  "footer": {
+    "license": "住宅宿泊事业法登记号",
+    "licenseNumber": "第M000000000号",
+    "copyright": "picainn. 版权所有。",
+    "companyName": "皮卡因名宿",
+    "address": "日本国東京都文京区本駒込5-55-3",
+    "tel": "03-6638-6215",
+    "fax": "03-6638-6217",
+    "email": "picainn@gmail.com"
+  }
+}
+
