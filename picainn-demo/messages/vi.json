@@ -124,6 +124,14 @@
     "nextImage": "Hình ảnh tiếp theo",
     "goToImage": "Đi đến hình ảnh"
   },
+  "amenityLabels": {
+    "wifi": "Wi-Fi",
+    "airConditioner": "Điều hòa",
+    "refrigerator": "Tủ lạnh",
+    "tv": "TV",
+    "kitchen": "Nhà bếp",
+    "privateBathroom": "Phòng tắm riêng"
+  },
   "social": {
     "scanQRCode": "Quét Mã QR {platform}",
     "scanToConnect": "Quét mã này để kết nối với chúng tôi trên {platform}",
