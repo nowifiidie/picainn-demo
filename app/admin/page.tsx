@@ -16,18 +16,102 @@ const PRESET_AMENITIES = [
 
 const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English' },
-  { code: 'zh', name: '简体中文 (Simplified Chinese)' },
-  { code: 'zh-TW', name: '繁體中文 (Traditional Chinese)' },
-  { code: 'ko', name: '한국어 (Korean)' },
-  { code: 'th', name: 'ไทย (Thai)' },
-  { code: 'es', name: 'Español (Spanish)' },
-  { code: 'fr', name: 'Français (French)' },
-  { code: 'id', name: 'Bahasa Indonesia (Indonesian)' },
-  { code: 'ar', name: 'العربية (Arabic)' },
-  { code: 'de', name: 'Deutsch (German)' },
-  { code: 'vi', name: 'Tiếng Việt (Vietnamese)' },
-  { code: 'my', name: 'မြန်မာ (Myanmar)' },
+  { code: 'zh', name: '简体中文' },
+  { code: 'zh-TW', name: '繁體中文' },
+  { code: 'ko', name: '한국어' },
+  { code: 'th', name: 'ไทย' },
+  { code: 'es', name: 'Español' },
+  { code: 'fr', name: 'Français' },
+  { code: 'id', name: 'Bahasa Indonesia' },
+  { code: 'ar', name: 'العربية' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'vi', name: 'Tiếng Việt' },
+  { code: 'my', name: 'မြန်မာ' },
 ];
+
+// 管理後台繁體中文文案
+const ADMIN_ZH = {
+  title: 'CMS 管理後台',
+  subtitle: '管理您的落地頁內容',
+  heroImage: '首圖',
+  currentHeroImage: '目前首圖',
+  deleteHeroImage: '刪除首圖',
+  deleting: '刪除中…',
+  replaceHeroImage: '替換首圖背景',
+  uploadHeroImage: '上傳首圖背景',
+  replaceHeroHint: '將替換目前首圖背景。',
+  uploadHeroHint: '上傳新的首圖背景圖片。',
+  uploading: '上傳中…',
+  updateHeroImage: '更新首圖',
+  uploadHeroImageBtn: '上傳首圖',
+  currentRooms: '目前房間',
+  refresh: '重新整理',
+  dragHint: '拖曳房間卡片可調整順序，首頁將依此順序顯示。',
+  loadingRooms: '載入房間中…',
+  noRooms: '暫無房間，請在下方新增第一間房間。',
+  noImage: '無圖片',
+  missingImage: '缺少圖片',
+  guests: '人',
+  altText: '替代文字',
+  noAltText: '無替代文字',
+  editRoom: '編輯房間',
+  delete: '刪除',
+  editRoomTitle: '編輯房間',
+  roomName: '房間名稱 *',
+  roomType: '房間類型 *',
+  descriptionFallback: '描述（備用，用於相容） *',
+  translate: '翻譯',
+  translating: '翻譯中…',
+  fallbackHint: '缺少翻譯時會使用此內容。',
+  descriptionMulti: '房間描述（多語言） *',
+  enterDescription: '在此輸入',
+  descriptionRecommend: '建議至少填寫一種語言。缺少翻譯時將使用備用描述。',
+  maxGuests: '最多入住人數 *',
+  roomSize: '房間面積 (m²) *',
+  sizeHint: '直接輸入數字（如 20）即可，將自動加上 m²。',
+  bedInfo: '床位資訊 *',
+  amenities: '設施 *',
+  address: '地址 *',
+  mapUrl: 'Google 地圖嵌入連結 *',
+  altTextEn: '替代文字（英文）',
+  altTextJa: '替代文字（日文）',
+  altTextKo: '替代文字（韓文）',
+  altTextZh: '替代文字（中文）',
+  noImagesForRoom: '該房間暫無圖片。',
+  setMainImage: '設為主圖',
+  showImage: '顯示圖片',
+  hideImage: '隱藏圖片',
+  updateImage: '更新圖片',
+  chooseFile: '選擇檔案',
+  updating: '更新中…',
+  updateRoom: '更新房間',
+  cancel: '取消',
+  addNewRoom: '新增房間',
+  addRoom: '新增房間',
+  addingRoom: '新增中…',
+  roomImagesRequired: '房間圖片 *',
+  roomImagesHint: '可上傳多張圖片。第一張將作為主圖 (main.jpg)，其餘依序為 image-1.jpg、image-2.jpg 等。',
+  placeholderName: '例如：6 號房',
+  placeholderType: '例如：標準雙人床',
+  placeholderDesc: '填寫房間描述（備用）…',
+  placeholderSize: '例如：20',
+  placeholderBed: '例如：1 張雙人床 (140 cm x 200 cm)',
+  placeholderAddress: '例如：東京都文京區駒込站附近',
+  placeholderMap: 'https://www.google.com/maps/embed?pb=...',
+  placeholderAltEn: '英文 SEO 替代文字',
+  placeholderAltJa: '日文 SEO 替代文字',
+  placeholderAltKo: '韓文 SEO 替代文字',
+  placeholderAltZh: '中文 SEO 替代文字',
+  close: '關閉',
+  confirmTranslate: '即將自動將所有房間描述翻譯為 12 種語言。已有翻譯的房間將略過（除非選擇覆蓋）。是否繼續？',
+  successTranslate: '翻譯完成！已翻譯 {translated} 間房間，略過 {skipped} 間，錯誤 {errors} 個。請重新整理頁面查看。',
+  errorTranslate: '翻譯失敗',
+  errorGeneric: '發生錯誤',
+  pleaseEnterEnglish: '請先輸入英文描述。',
+  deleteConfirm: '確定要刪除「{name}」嗎？將同時刪除該房間及全部圖片，且無法復原。',
+  confirmDeleteHero: '確定要刪除首圖嗎？此操作無法復原。',
+  amenityLabels: { 'Wi-Fi': '無線網路', 'Air Conditioner': '空調', 'TV': '電視', 'Refrigerator': '冰箱', 'Kitchen': '廚房', 'Private Bathroom': '獨立衛浴' } as Record<string, string>,
+} as const;
 
 interface RoomDisplay {
   roomId: string;
@@ -135,7 +219,7 @@ export default function AdminPage() {
   // Translate description to all languages and fill form fields
   async function handleTranslateDescription(formId: 'edit' | 'add', englishDescription: string) {
     if (!englishDescription || englishDescription.trim() === '') {
-      alert('Please enter an English description first');
+      alert(ADMIN_ZH.pleaseEnterEnglish);
       return;
     }
 
@@ -228,7 +312,7 @@ export default function AdminPage() {
   }
 
   async function handleDeleteHero() {
-    if (!window.confirm('Are you sure you want to delete the hero image? This action cannot be undone.')) {
+    if (!window.confirm(ADMIN_ZH.confirmDeleteHero)) {
       return;
     }
 
@@ -486,7 +570,7 @@ export default function AdminPage() {
   }
 
   async function handleDeleteRoom(roomId: string, roomName: string) {
-    if (!confirm(`Are you sure you want to delete "${roomName}" (${roomId})?\n\nThis will delete the entire room including all images.\n\nThis action cannot be undone.`)) {
+    if (!confirm(ADMIN_ZH.deleteConfirm.replace('{name}', `${roomName} (${roomId})`))) {
       return;
     }
 
@@ -550,7 +634,7 @@ export default function AdminPage() {
       return;
     }
     
-    if (!confirm(`Are you sure you want to delete "${displayName}"?\n\nThis action cannot be undone.`)) return;
+    if (!confirm(ADMIN_ZH.deleteConfirm.replace('{name}', displayName))) return;
 
     setUpdatingImage(filename);
     try {
@@ -971,7 +1055,7 @@ export default function AdminPage() {
             <button
               onClick={() => setShowSuccessModal(false)}
               className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close"
+              aria-label={ADMIN_ZH.close}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -984,33 +1068,33 @@ export default function AdminPage() {
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <main className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <h1 className="text-3xl font-light text-gray-900 mb-2">CMS Admin Panel</h1>
-          <p className="text-gray-600">Manage your landing page content</p>
+          <h1 className="text-3xl font-light text-gray-900 mb-2">{ADMIN_ZH.title}</h1>
+          <p className="text-gray-600">{ADMIN_ZH.subtitle}</p>
         </div>
 
         {/* Hero Image Upload Section */}
         <section className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <h2 className="text-2xl font-light text-gray-900 mb-6">Hero Image</h2>
+          <h2 className="text-2xl font-light text-gray-900 mb-6">{ADMIN_ZH.heroImage}</h2>
           
           {/* Current Hero Image Preview */}
           {heroImageExists && (
             <div className="mb-6 p-4 bg-gray-50 rounded-sm border border-gray-200">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-medium text-gray-700">Current Hero Image</p>
+                <p className="text-sm font-medium text-gray-700">{ADMIN_ZH.currentHeroImage}</p>
                 <button
                   onClick={handleDeleteHero}
                   disabled={isDeletingHero}
                   className="flex items-center gap-2 px-4 py-2 text-sm bg-red-600 text-white rounded-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" />
-                  {isDeletingHero ? 'Deleting...' : 'Delete Hero Image'}
+                  {isDeletingHero ? ADMIN_ZH.deleting : ADMIN_ZH.deleteHeroImage}
                 </button>
               </div>
               <div className="relative w-full h-48 rounded-sm overflow-hidden border border-gray-300">
                 <Image
                   key={heroImageUrl} // Force re-render when URL changes
                   src={heroImageUrl}
-                  alt="Current hero image"
+                  alt={ADMIN_ZH.currentHeroImage}
                   fill
                   className="object-cover"
                   sizes="100%"
@@ -1023,7 +1107,7 @@ export default function AdminPage() {
           <form onSubmit={handleHeroSubmit} className="space-y-4">
             <div>
               <label htmlFor="hero-image" className="block text-sm font-medium text-gray-700 mb-2">
-                {heroImageExists ? 'Replace Hero Background Image' : 'Upload Hero Background Image'}
+                {heroImageExists ? ADMIN_ZH.replaceHeroImage : ADMIN_ZH.uploadHeroImage}
               </label>
               <input
                 type="file"
@@ -1035,8 +1119,8 @@ export default function AdminPage() {
               />
               <p className="mt-1 text-sm text-gray-500">
                 {heroImageExists 
-                  ? 'This will replace the current hero background image.'
-                  : 'Upload a new hero background image.'}
+                  ? ADMIN_ZH.replaceHeroHint
+                  : ADMIN_ZH.uploadHeroHint}
               </p>
             </div>
             <button
@@ -1044,7 +1128,7 @@ export default function AdminPage() {
               disabled={isHeroUploading}
               className="px-6 py-2 bg-[#333333] text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isHeroUploading ? 'Uploading...' : heroImageExists ? 'Update Hero Image' : 'Upload Hero Image'}
+              {isHeroUploading ? ADMIN_ZH.uploading : heroImageExists ? ADMIN_ZH.updateHeroImage : ADMIN_ZH.uploadHeroImageBtn}
             </button>
             {heroStatus && (
               <div
@@ -1063,11 +1147,11 @@ export default function AdminPage() {
         {/* Current Rooms Section */}
         <section className="bg-white rounded-lg shadow-sm p-8 mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-light text-gray-900">Current Rooms</h2>
+            <h2 className="text-2xl font-light text-gray-900">{ADMIN_ZH.currentRooms}</h2>
             <div className="flex gap-2">
               <button
                 onClick={async () => {
-                  if (confirm('This will automatically translate all room descriptions into 12 languages. Rooms that already have translations will be skipped unless you choose to overwrite. Continue?')) {
+                  if (confirm(ADMIN_ZH.confirmTranslate)) {
                     try {
                       const response = await fetch('/api/cms/auto-translate-rooms', {
                         method: 'POST',
@@ -1076,39 +1160,39 @@ export default function AdminPage() {
                       });
                       const result = await response.json();
                       if (result.success) {
-                        alert(`✅ Success! Translated ${result.summary.translated} rooms. Skipped ${result.summary.skipped}. Errors: ${result.summary.errors}\n\nPlease refresh to see the updates.`);
+                        alert(`✅ ${ADMIN_ZH.successTranslate.replace('{translated}', String(result.summary.translated)).replace('{skipped}', String(result.summary.skipped)).replace('{errors}', String(result.summary.errors))}`);
                         await fetchRooms();
                       } else {
-                        alert(`❌ Error: ${result.error || 'Failed to translate rooms'}`);
+                        alert(`❌ ${ADMIN_ZH.errorTranslate}: ${result.error || ''}`);
                       }
                     } catch (error) {
-                      alert(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                      alert(`❌ ${ADMIN_ZH.errorGeneric}: ${error instanceof Error ? error.message : ''}`);
                     }
                   }
                 }}
                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-sm font-medium hover:bg-blue-700 transition-colors"
-                title="Auto-translate all room descriptions into 12 languages"
+                title={ADMIN_ZH.confirmTranslate}
               >
-                🌐 Auto-Translate All Rooms
+                🌐 一鍵翻譯全部房間
               </button>
               <button
                 onClick={fetchRooms}
                 className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-sm font-medium hover:bg-gray-200 transition-colors"
               >
-                Refresh
+                {ADMIN_ZH.refresh}
               </button>
             </div>
           </div>
           <p className="text-sm text-gray-500 mb-6 min-h-[1.5rem]">
-            💡 Drag and drop room cards to reorder them. The order will be reflected on the home page.
+            💡 {ADMIN_ZH.dragHint}
           </p>
           {isLoadingRooms ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">Loading rooms...</p>
+              <p className="text-gray-500">{ADMIN_ZH.loadingRooms}</p>
             </div>
           ) : rooms.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">No rooms found. Add your first room below.</p>
+              <p className="text-gray-500">{ADMIN_ZH.noRooms}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1144,13 +1228,13 @@ export default function AdminPage() {
                           <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          <p className="text-xs">No image</p>
+                          <p className="text-xs">{ADMIN_ZH.noImage}</p>
                         </div>
                       </div>
                     )}
                     {!room.hasImage && (
                       <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
-                        Missing Image
+                        {ADMIN_ZH.missingImage}
                       </div>
                     )}
                   </div>
@@ -1169,13 +1253,13 @@ export default function AdminPage() {
                     </div>
                     <p className="text-sm text-gray-700 mb-3 line-clamp-2 min-h-[2.5rem]">{room.description}</p>
                     <div className="flex gap-4 text-xs text-gray-500 mb-3">
-                      <span>👥 {room.maxGuests} guests</span>
+                      <span>👥 {room.maxGuests} {ADMIN_ZH.guests}</span>
                       <span>📐 {room.size}</span>
                     </div>
                     <div className="pt-3 border-t border-gray-100 mb-4 min-h-[3rem]">
                       {room.altText ? (
                         <>
-                          <p className="text-xs font-medium text-gray-700 mb-1">Alt Text:</p>
+                          <p className="text-xs font-medium text-gray-700 mb-1">{ADMIN_ZH.altText}</p>
                           <div className="space-y-1 text-xs text-gray-600">
                             {room.altText.en && <div>🇬🇧 EN: {room.altText.en}</div>}
                             {room.altText.ja && <div>🇯🇵 JA: {room.altText.ja}</div>}
@@ -1184,7 +1268,7 @@ export default function AdminPage() {
                           </div>
                         </>
                       ) : (
-                        <div className="text-xs text-gray-600">No alt text</div>
+                        <div className="text-xs text-gray-600">{ADMIN_ZH.noAltText}</div>
                       )}
                     </div>
                     <div className="mt-auto flex gap-2">
@@ -1192,14 +1276,14 @@ export default function AdminPage() {
                         onClick={() => handleEditClick(room)}
                         className="flex-1 px-4 py-2 bg-[#333333] text-white rounded-sm text-sm font-medium hover:bg-gray-800 transition-colors"
                       >
-                        Edit Room
+                        {ADMIN_ZH.editRoom}
                       </button>
                       <button
                         onClick={() => handleDeleteRoom(room.roomId, room.name)}
                         className="px-4 py-2 bg-red-600 text-white rounded-sm text-sm font-medium hover:bg-red-700 transition-colors"
-                        title={`Delete ${room.name}`}
+                        title={`${ADMIN_ZH.delete} ${room.name}`}
                       >
-                        Delete
+                        {ADMIN_ZH.delete}
                       </button>
                     </div>
                   </div>
@@ -1214,13 +1298,14 @@ export default function AdminPage() {
           <div className="fixed inset-0 bg-gray-900 bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-light text-gray-900">Edit Room: {editingRoom.name}</h2>
+                <h2 className="text-2xl font-light text-gray-900">{ADMIN_ZH.editRoomTitle}: {editingRoom.name}</h2>
                 <button
                   onClick={() => {
                     setEditingRoom(null);
                     setEditStatus(null);
                   }}
                   className="text-gray-400 hover:text-gray-600"
+                  aria-label={ADMIN_ZH.close}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1233,7 +1318,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-2">
-                      Room Name *
+                      {ADMIN_ZH.roomName}
                     </label>
                     <input
                       type="text"
@@ -1247,7 +1332,7 @@ export default function AdminPage() {
 
                   <div>
                     <label htmlFor="edit-type" className="block text-sm font-medium text-gray-700 mb-2">
-                      Room Type *
+                      {ADMIN_ZH.roomType}
                     </label>
                     <input
                       type="text"
@@ -1262,7 +1347,7 @@ export default function AdminPage() {
 
                 <div>
                   <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
-                    Description (Fallback - for backward compatibility) *
+                    {ADMIN_ZH.descriptionFallback}
                   </label>
                   <div className="flex gap-2">
                     <textarea
@@ -1282,17 +1367,17 @@ export default function AdminPage() {
                       }}
                       disabled={isTranslating}
                       className="px-4 py-2 bg-[#8B7355] text-white rounded-sm hover:bg-[#6B5A42] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm"
-                      title="Auto-translate English description to all languages"
+                      title={ADMIN_ZH.translate}
                     >
-                      {isTranslating ? 'Translating...' : '🌐 Translate'}
+                      {isTranslating ? ADMIN_ZH.translating : `🌐 ${ADMIN_ZH.translate}`}
                     </button>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">This is used as a fallback if translations are missing</p>
+                  <p className="mt-1 text-xs text-gray-500">{ADMIN_ZH.fallbackHint}</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Room Description (Multi-language) *
+                    {ADMIN_ZH.descriptionMulti}
                   </label>
                   <div className="space-y-4">
                     {SUPPORTED_LANGUAGES.map((lang) => (
@@ -1306,18 +1391,18 @@ export default function AdminPage() {
                           defaultValue={editingRoom.descriptionI18n?.[lang.code as keyof typeof editingRoom.descriptionI18n] || ''}
                           rows={3}
                           className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent text-sm"
-                          placeholder={`Enter description in ${lang.name}...`}
+                          placeholder={`${ADMIN_ZH.enterDescription} ${lang.name}...`}
                         />
                       </div>
                     ))}
                   </div>
-                  <p className="mt-2 text-xs text-gray-500">At least one language description is recommended. The fallback description will be used if a translation is missing.</p>
+                  <p className="mt-2 text-xs text-gray-500">{ADMIN_ZH.descriptionRecommend}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label htmlFor="edit-maxGuests" className="block text-sm font-medium text-gray-700 mb-2">
-                      Max Guests *
+                      {ADMIN_ZH.maxGuests}
                     </label>
                     <input
                       type="number"
@@ -1332,7 +1417,7 @@ export default function AdminPage() {
 
                   <div>
                     <label htmlFor="edit-size" className="block text-sm font-medium text-gray-700 mb-2">
-                      Room Size (m²) *
+                      {ADMIN_ZH.roomSize}
                     </label>
                     <input
                       type="text"
@@ -1340,7 +1425,7 @@ export default function AdminPage() {
                       name="size"
                       defaultValue={editingRoom.size}
                       required
-                      placeholder="e.g., 20"
+                      placeholder={ADMIN_ZH.placeholderSize}
                       onBlur={(e) => {
                         const value = e.target.value.trim();
                         // Extract number and auto-format to m²
@@ -1353,12 +1438,12 @@ export default function AdminPage() {
                       }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
                     />
-                    <p className="mt-1 text-xs text-gray-500">Just type a number (e.g., 20) - it will auto-convert to m²</p>
+                    <p className="mt-1 text-xs text-gray-500">{ADMIN_ZH.sizeHint}</p>
                   </div>
 
                   <div>
                     <label htmlFor="edit-bedInfo" className="block text-sm font-medium text-gray-700 mb-2">
-                      Bed Info *
+                      {ADMIN_ZH.bedInfo}
                     </label>
                     <input
                       type="text"
@@ -1366,7 +1451,7 @@ export default function AdminPage() {
                       name="bedInfo"
                       defaultValue={editingRoom.bedInfo || ''}
                       required
-                      placeholder="e.g., 1 double bed (140 cm x 200 cm)"
+                      placeholder={ADMIN_ZH.placeholderBed}
                       className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
                     />
                   </div>
@@ -1374,7 +1459,7 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Amenities *
+                    {ADMIN_ZH.amenities}
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {PRESET_AMENITIES.map((amenity) => {
@@ -1398,7 +1483,7 @@ export default function AdminPage() {
                             className="w-4 h-4 text-[#333333] border-gray-300 rounded focus:ring-[#333333]"
                           />
                           <Icon className="w-5 h-5 text-gray-600" />
-                          <span className="text-sm text-gray-700">{amenity.name}</span>
+                          <span className="text-sm text-gray-700">{ADMIN_ZH.amenityLabels[amenity.name] ?? amenity.name}</span>
                         </label>
                       );
                     })}
@@ -1407,7 +1492,7 @@ export default function AdminPage() {
 
                 <div>
                   <label htmlFor="edit-address" className="block text-sm font-medium text-gray-700 mb-2">
-                    Address *
+                    {ADMIN_ZH.address}
                   </label>
                   <input
                     type="text"
@@ -1421,7 +1506,7 @@ export default function AdminPage() {
 
                 <div>
                   <label htmlFor="edit-mapUrl" className="block text-sm font-medium text-gray-700 mb-2">
-                    Google Maps Embed URL *
+                    {ADMIN_ZH.mapUrl}
                   </label>
                   <input
                     type="url"
@@ -1429,7 +1514,7 @@ export default function AdminPage() {
                     name="mapUrl"
                     defaultValue={editingRoom.mapUrl || ''}
                     required
-                    placeholder="https://www.google.com/maps/embed?pb=..."
+                    placeholder={ADMIN_ZH.placeholderMap}
                     className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
                   />
                 </div>
@@ -1437,7 +1522,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="edit-altTextEn" className="block text-sm font-medium text-gray-700 mb-2">
-                      Alt Text (English)
+                      {ADMIN_ZH.altTextEn}
                     </label>
                     <input
                       type="text"
@@ -1450,7 +1535,7 @@ export default function AdminPage() {
 
                   <div>
                     <label htmlFor="edit-altTextJa" className="block text-sm font-medium text-gray-700 mb-2">
-                      Alt Text (日本語)
+                      {ADMIN_ZH.altTextJa}
                     </label>
                     <input
                       type="text"
@@ -1463,7 +1548,7 @@ export default function AdminPage() {
 
                   <div>
                     <label htmlFor="edit-altTextKo" className="block text-sm font-medium text-gray-700 mb-2">
-                      Alt Text (한국어)
+                      {ADMIN_ZH.altTextKo}
                     </label>
                     <input
                       type="text"
@@ -1476,7 +1561,7 @@ export default function AdminPage() {
 
                   <div>
                     <label htmlFor="edit-altTextZh" className="block text-sm font-medium text-gray-700 mb-2">
-                      Alt Text (中文)
+                      {ADMIN_ZH.altTextZh}
                     </label>
                     <input
                       type="text"
@@ -1500,7 +1585,7 @@ export default function AdminPage() {
                     </div>
                   ) : roomImages.length === 0 ? (
                     <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-sm">
-                      <p className="text-gray-500">No images found for this room</p>
+                      <p className="text-gray-500">{ADMIN_ZH.noImagesForRoom}</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -1546,7 +1631,7 @@ export default function AdminPage() {
                                   onClick={() => handleSetMainImage(editingRoom!.roomId, image.filename)}
                                   disabled={updatingImage === image.filename || isLoadingImages}
                                   className="flex-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors disabled:opacity-50"
-                                  title="Set as main image"
+                                  title={ADMIN_ZH.setMainImage}
                                 >
                                   <Star className="w-3 h-3 mx-auto" />
                                 </button>
@@ -1558,7 +1643,7 @@ export default function AdminPage() {
                                 onClick={() => handleToggleVisibility(editingRoom!.roomId, image.filename, !image.isHidden)}
                                 disabled={updatingImage === image.filename || image.isMain || isLoadingImages}
                                 className="flex-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors disabled:opacity-50"
-                                title={image.isHidden ? 'Show image' : 'Hide image'}
+                                title={image.isHidden ? ADMIN_ZH.showImage : ADMIN_ZH.hideImage}
                               >
                                 {image.isHidden ? (
                                   <Eye className="w-3 h-3 mx-auto" />
@@ -1644,7 +1729,7 @@ export default function AdminPage() {
                     disabled={isEditing}
                     className="flex-1 px-6 py-2 bg-[#333333] text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isEditing ? 'Updating...' : 'Update Room'}
+                    {isEditing ? ADMIN_ZH.updating : ADMIN_ZH.updateRoom}
                   </button>
                   <button
                     type="button"
@@ -1665,8 +1750,8 @@ export default function AdminPage() {
                     }}
                     className="px-6 py-2 bg-gray-100 text-gray-700 rounded-sm font-medium hover:bg-gray-200 transition-colors"
                   >
-                    Cancel
-                  </button>
+{ADMIN_ZH.cancel}
+                    </button>
                 </div>
 
                 {editStatus && (
@@ -1687,12 +1772,12 @@ export default function AdminPage() {
 
         {/* Add New Room Section */}
         <section className="bg-white rounded-lg shadow-sm p-8">
-          <h2 className="text-2xl font-light text-gray-900 mb-6">Add New Room</h2>
+          <h2 className="text-2xl font-light text-gray-900 mb-6">{ADMIN_ZH.addNewRoom}</h2>
           <form onSubmit={handleRoomSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="room-name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Room Name *
+                  {ADMIN_ZH.roomName}
                 </label>
                 <input
                   type="text"
@@ -1700,13 +1785,13 @@ export default function AdminPage() {
                   name="name"
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                  placeholder="e.g., Room 6"
+                  placeholder={ADMIN_ZH.placeholderName}
                 />
               </div>
 
               <div>
                 <label htmlFor="room-type" className="block text-sm font-medium text-gray-700 mb-2">
-                  Room Type *
+                  {ADMIN_ZH.roomType}
                 </label>
                 <input
                   type="text"
@@ -1714,14 +1799,14 @@ export default function AdminPage() {
                   name="type"
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                  placeholder="e.g., Standard Double"
+                  placeholder={ADMIN_ZH.placeholderType}
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="room-description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description (Fallback - for backward compatibility) *
+                {ADMIN_ZH.descriptionFallback}
               </label>
               <div className="flex gap-2">
                 <textarea
@@ -1730,7 +1815,7 @@ export default function AdminPage() {
                   required
                   rows={3}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                  placeholder="Describe the room (fallback)..."
+                  placeholder={ADMIN_ZH.placeholderDesc}
                 />
                 <button
                   type="button"
@@ -1741,17 +1826,17 @@ export default function AdminPage() {
                   }}
                   disabled={isTranslating}
                   className="px-4 py-2 bg-[#8B7355] text-white rounded-sm hover:bg-[#6B5A42] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-sm"
-                  title="Auto-translate English description to all languages"
+                  title={ADMIN_ZH.translate}
                 >
-                  {isTranslating ? 'Translating...' : '🌐 Translate'}
+                  {isTranslating ? ADMIN_ZH.translating : `🌐 ${ADMIN_ZH.translate}`}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">This is used as a fallback if translations are missing</p>
+              <p className="mt-1 text-xs text-gray-500">{ADMIN_ZH.fallbackHint}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Room Description (Multi-language) *
+                {ADMIN_ZH.descriptionMulti}
               </label>
               <div className="space-y-4">
                 {SUPPORTED_LANGUAGES.map((lang) => (
@@ -1764,18 +1849,18 @@ export default function AdminPage() {
                       name={`descriptionI18n-${lang.code}`}
                       rows={3}
                       className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent text-sm"
-                      placeholder={`Enter description in ${lang.name}...`}
+                      placeholder={`${ADMIN_ZH.enterDescription} ${lang.name}...`}
                     />
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-gray-500">At least one language description is recommended. The fallback description will be used if a translation is missing.</p>
+              <p className="mt-2 text-xs text-gray-500">{ADMIN_ZH.descriptionRecommend}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label htmlFor="room-maxGuests" className="block text-sm font-medium text-gray-700 mb-2">
-                  Max Guests *
+                  {ADMIN_ZH.maxGuests}
                 </label>
                 <input
                   type="number"
@@ -1799,7 +1884,7 @@ export default function AdminPage() {
                   defaultValue="20"
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                  placeholder="e.g., 20"
+                  placeholder={ADMIN_ZH.placeholderSize}
                   onBlur={(e) => {
                     const value = e.target.value.trim();
                     // Extract number and auto-format to m²
@@ -1811,7 +1896,7 @@ export default function AdminPage() {
                     }
                   }}
                 />
-                <p className="mt-1 text-xs text-gray-500">Just type a number (e.g., 20) - it will auto-convert to m²</p>
+                <p className="mt-1 text-xs text-gray-500">{ADMIN_ZH.sizeHint}</p>
               </div>
 
               <div>
@@ -1824,7 +1909,7 @@ export default function AdminPage() {
                   name="bedInfo"
                   defaultValue="1 double bed (140 cm x 200 cm)"
                   required
-                  placeholder="e.g., 1 double bed (140 cm x 200 cm)"
+                  placeholder={ADMIN_ZH.placeholderBed}
                   className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
                 />
               </div>
@@ -1833,60 +1918,60 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="alt-text-en" className="block text-sm font-medium text-gray-700 mb-2">
-                  Alt Text (English)
+                  {ADMIN_ZH.altTextEn}
                 </label>
                 <input
                   type="text"
                   id="alt-text-en"
                   name="altTextEn"
                   className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                  placeholder="SEO-friendly alt text in English"
+                  placeholder={ADMIN_ZH.placeholderAltEn}
                 />
               </div>
 
               <div>
                 <label htmlFor="alt-text-ja" className="block text-sm font-medium text-gray-700 mb-2">
-                  Alt Text (日本語)
+                  {ADMIN_ZH.altTextJa}
                 </label>
                 <input
                   type="text"
                   id="alt-text-ja"
                   name="altTextJa"
                   className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                  placeholder="SEO用の日本語のaltテキスト"
+                  placeholder={ADMIN_ZH.placeholderAltJa}
                 />
               </div>
 
               <div>
                 <label htmlFor="alt-text-ko" className="block text-sm font-medium text-gray-700 mb-2">
-                  Alt Text (한국어)
+                  {ADMIN_ZH.altTextKo}
                 </label>
                 <input
                   type="text"
                   id="alt-text-ko"
                   name="altTextKo"
                   className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                  placeholder="SEO 친화적인 한국어 alt 텍스트"
+                  placeholder={ADMIN_ZH.placeholderAltKo}
                 />
               </div>
 
               <div>
                 <label htmlFor="alt-text-zh" className="block text-sm font-medium text-gray-700 mb-2">
-                  Alt Text (中文)
+                  {ADMIN_ZH.altTextZh}
                 </label>
                 <input
                   type="text"
                   id="alt-text-zh"
                   name="altTextZh"
                   className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                  placeholder="SEO友好的中文alt文本"
+                  placeholder={ADMIN_ZH.placeholderAltZh}
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Amenities *
+                {ADMIN_ZH.amenities}
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {PRESET_AMENITIES.map((amenity) => {
@@ -1904,7 +1989,7 @@ export default function AdminPage() {
                         className="w-4 h-4 text-[#333333] border-gray-300 rounded focus:ring-[#333333]"
                       />
                       <Icon className="w-5 h-5 text-gray-600" />
-                      <span className="text-sm text-gray-700">{amenity.name}</span>
+                      <span className="text-sm text-gray-700">{ADMIN_ZH.amenityLabels[amenity.name] ?? amenity.name}</span>
                     </label>
                   );
                 })}
@@ -1913,7 +1998,7 @@ export default function AdminPage() {
 
             <div>
               <label htmlFor="room-address" className="block text-sm font-medium text-gray-700 mb-2">
-                Address *
+                {ADMIN_ZH.address}
               </label>
               <input
                 type="text"
@@ -1922,13 +2007,13 @@ export default function AdminPage() {
                 defaultValue="Near Komagome Station, Bunkyo City, Tokyo"
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                placeholder="e.g., Near Komagome Station, Bunkyo City, Tokyo"
+                placeholder={ADMIN_ZH.placeholderAddress}
               />
             </div>
 
             <div>
               <label htmlFor="room-mapUrl" className="block text-sm font-medium text-gray-700 mb-2">
-                Google Maps Embed URL *
+                {ADMIN_ZH.mapUrl}
               </label>
               <input
                 type="url"
@@ -1937,13 +2022,13 @@ export default function AdminPage() {
                 defaultValue="https://www.google.com/maps/embed?pb=..."
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-sm focus:ring-2 focus:ring-[#333333] focus:border-transparent"
-                placeholder="e.g., https://www.google.com/maps/embed?pb=..."
+                placeholder={ADMIN_ZH.placeholderMap}
               />
             </div>
 
             <div>
               <label htmlFor="room-images" className="block text-sm font-medium text-gray-700 mb-2">
-                Room Images *
+                {ADMIN_ZH.roomImagesRequired}
               </label>
               <input
                 type="file"
@@ -1955,7 +2040,7 @@ export default function AdminPage() {
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
               />
               <p className="mt-1 text-sm text-gray-500">
-                Upload one or more images. The first image will be the main image (main.jpg), additional images will be saved as image-1.jpg, image-2.jpg, etc.
+                {ADMIN_ZH.roomImagesHint}
               </p>
             </div>
 
@@ -1964,7 +2049,7 @@ export default function AdminPage() {
               disabled={isRoomUploading}
               className="px-6 py-2 bg-[#333333] text-white rounded-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isRoomUploading ? 'Adding Room...' : 'Add Room'}
+              {isRoomUploading ? ADMIN_ZH.addingRoom : ADMIN_ZH.addRoom}
             </button>
             {roomStatus && (
               <div
