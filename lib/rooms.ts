@@ -17,6 +17,9 @@ export interface RoomMetadata {
     vi?: string;
     my?: string;
   };
+  nameI18n?: Record<string, string>;
+  typeI18n?: Record<string, string>;
+  amenitiesI18n?: Record<string, string[]>;
   amenities: string[];
   bedInfo: string;
   maxGuests: number;

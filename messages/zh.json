@@ -124,6 +124,14 @@
     "nextImage": "下一张图片",
     "goToImage": "转到图片"
   },
+  "amenityLabels": {
+    "wifi": "Wi-Fi",
+    "airConditioner": "空调",
+    "refrigerator": "冰箱",
+    "tv": "电视",
+    "kitchen": "厨房",
+    "privateBathroom": "独立卫浴"
+  },
   "social": {
     "scanQRCode": "扫描{platform}二维码",
     "scanToConnect": "扫描此代码以在{platform}上与我们联系",
