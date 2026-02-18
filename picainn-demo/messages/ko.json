@@ -124,6 +124,14 @@
     "nextImage": "다음 이미지",
     "goToImage": "이미지로 이동"
   },
+  "amenityLabels": {
+    "wifi": "Wi-Fi",
+    "airConditioner": "에어컨",
+    "refrigerator": "냉장고",
+    "tv": "TV",
+    "kitchen": "주방",
+    "privateBathroom": "개인 욕실"
+  },
   "social": {
     "scanQRCode": "{platform} QR 코드 스캔",
     "scanToConnect": "이 코드를 스캔하여 {platform}에서 저희와 연결하세요",
