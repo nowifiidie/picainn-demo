@@ -44,7 +44,7 @@ interface Room {
   images: string[];
   description: string;
   amenities: string[];
-  amenityKeys?: string[];
+  amenityKeys: string[]; // required so built object matches type (no predicate needed)
   bedInfo: string;
   maxGuests: number;
   size: string;
@@ -100,64 +100,49 @@ export default function PropertyGallery() {
         const data = await response.json();
         const roomImages: RoomImages[] = data.rooms;
 
-        // Merge room images with metadata
-        const mergedRooms = roomImages
-          .map((roomImg) => {
-            // Use metadata from API if available (Blob Storage rooms), otherwise fall back to static metadata
-            const metadata = roomImg.metadata || getRoomMetadata(roomImg.roomId);
-            if (!metadata) {
-              console.warn(`No metadata found for ${roomImg.roomId}`);
-              return null;
-            }
+        // Merge room images with metadata (use loop to avoid filter type-predicate issues)
+        const mergedRooms: Room[] = [];
+        for (const roomImg of roomImages) {
+          const metadata = roomImg.metadata || getRoomMetadata(roomImg.roomId);
+          if (!metadata) {
+            console.warn(`No metadata found for ${roomImg.roomId}`);
+            continue;
+          }
+          const numericId = parseInt(roomImg.roomId.replace('room', '')) || 0;
+          const timestamp = metadata.lastUpdated || Date.now();
+          const cacheBustMain = roomImg.mainImage.includes('?')
+            ? `${roomImg.mainImage.split('?')[0]}?t=${timestamp}`
+            : `${roomImg.mainImage}?t=${timestamp}`;
+          const cacheBustAdditional = roomImg.additionalImages.map(img =>
+            img.includes('?') ? `${img.split('?')[0]}?t=${timestamp}` : `${img}?t=${timestamp}`
+          );
+          const allImages = [cacheBustMain, ...cacheBustAdditional];
 
-            // Extract numeric ID from roomId (e.g., 'room1' -> 1)
-            const numericId = parseInt(roomImg.roomId.replace('room', '')) || 0;
+          const nameI18n = metadata.nameI18n as Record<string, string> | undefined;
+          const typeI18n = metadata.typeI18n as Record<string, string> | undefined;
+          const amenitiesI18n = metadata.amenitiesI18n as Record<string, string[]> | undefined;
+          const displayName = (nameI18n && locale && nameI18n[locale]) ? nameI18n[locale] : metadata.name;
+          const displayType = (typeI18n && locale && typeI18n[locale]) ? typeI18n[locale] : (metadata.type || '');
+          const displayAmenities = (amenitiesI18n && locale && amenitiesI18n[locale]) ? amenitiesI18n[locale] : (metadata.amenities || []).map((a: string) => getAmenityLabel(a, t));
 
-            // Combine main image with additional images
-            // Add cache busting timestamp to ALL image URLs (including Blob Storage URLs)
-            // This is critical because Vercel Blob Storage may return the same URL even after overwriting
-            const timestamp = metadata.lastUpdated || Date.now();
-            // Always add cache busting, even for HTTP/Blob URLs
-            const cacheBustMain = roomImg.mainImage.includes('?') 
-              ? `${roomImg.mainImage.split('?')[0]}?t=${timestamp}`
-              : `${roomImg.mainImage}?t=${timestamp}`;
-            const cacheBustAdditional = roomImg.additionalImages.map(img => 
-              img.includes('?') 
-                ? `${img.split('?')[0]}?t=${timestamp}`
-                : `${img}?t=${timestamp}`
-            );
-            const allImages = [cacheBustMain, ...cacheBustAdditional];
+          mergedRooms.push({
+            id: numericId,
+            name: displayName,
+            type: displayType,
+            image: cacheBustMain,
+            images: allImages,
+            description: getTranslatedDescription(metadata.description, metadata.descriptionI18n, locale),
+            amenities: displayAmenities,
+            amenityKeys: metadata.amenities ?? [],
+            bedInfo: metadata.bedInfo,
+            maxGuests: metadata.maxGuests,
+            size: metadata.size,
+            address: metadata.address,
+            mapUrl: metadata.mapUrl,
+          });
+        }
 
-            const nameI18n = metadata.nameI18n as Record<string, string> | undefined;
-            const typeI18n = metadata.typeI18n as Record<string, string> | undefined;
-            const amenitiesI18n = metadata.amenitiesI18n as Record<string, string[]> | undefined;
-            const displayName = (nameI18n && locale && nameI18n[locale]) ? nameI18n[locale] : metadata.name;
-            const displayType = (typeI18n && locale && typeI18n[locale]) ? typeI18n[locale] : (metadata.type || '');
-            const displayAmenities = (amenitiesI18n && locale && amenitiesI18n[locale]) ? amenitiesI18n[locale] : (metadata.amenities || []).map((a: string) => getAmenityLabel(a, t));
-
-            return {
-              id: numericId,
-              name: displayName,
-              type: displayType,
-              image: cacheBustMain,
-              images: allImages,
-              description: getTranslatedDescription(
-                metadata.description,
-                metadata.descriptionI18n,
-                locale
-              ),
-              amenities: displayAmenities,
-              amenityKeys: metadata.amenities,
-              bedInfo: metadata.bedInfo,
-              maxGuests: metadata.maxGuests,
-              size: metadata.size,
-              address: metadata.address,
-              mapUrl: metadata.mapUrl,
-            };
-          })
-          .filter((room): room is Room => room !== null);
-
-        setRooms(mergedRooms as Room[]);
+        setRooms(mergedRooms);
       } catch (error) {
         console.error('Error fetching rooms:', error);
       } finally {
