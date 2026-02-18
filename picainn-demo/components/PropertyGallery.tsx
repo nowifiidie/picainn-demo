@@ -135,7 +135,7 @@ export default function PropertyGallery() {
             const displayType = (typeI18n && locale && typeI18n[locale]) ? typeI18n[locale] : (metadata.type || '');
             const displayAmenities = (amenitiesI18n && locale && amenitiesI18n[locale]) ? amenitiesI18n[locale] : (metadata.amenities || []).map((a: string) => getAmenityLabel(a, t));
 
-            return {
+            const room: Room = {
               id: numericId,
               name: displayName,
               type: displayType,
@@ -154,10 +154,11 @@ export default function PropertyGallery() {
               address: metadata.address,
               mapUrl: metadata.mapUrl,
             };
+            return room;
           })
           .filter((room): room is Room => room !== null);
 
-        setRooms(mergedRooms as Room[]);
+        setRooms(mergedRooms);
       } catch (error) {
         console.error('Error fetching rooms:', error);
       } finally {
