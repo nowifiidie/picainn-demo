@@ -102,7 +102,7 @@ export default function PropertyGallery() {
 
         // Merge room images with metadata
         const mergedRooms = roomImages
-          .map((roomImg) => {
+          .map((roomImg): Room | null => {
             // Use metadata from API if available (Blob Storage rooms), otherwise fall back to static metadata
             const metadata = roomImg.metadata || getRoomMetadata(roomImg.roomId);
             if (!metadata) {
@@ -156,9 +156,9 @@ export default function PropertyGallery() {
             };
             return room;
           })
-          .filter((room): room is NonNullable<typeof room> => room !== null);
+          .filter((room): room is Room => room !== null);
 
-        setRooms(mergedRooms as Room[]);
+        setRooms(mergedRooms);
       } catch (error) {
         console.error('Error fetching rooms:', error);
       } finally {
