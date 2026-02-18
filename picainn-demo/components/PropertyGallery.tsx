@@ -156,7 +156,7 @@ export default function PropertyGallery() {
             };
             return room;
           })
-          .filter((room): room is Room => room !== null);
+          .filter((room) => room !== null) as Room[];
 
         setRooms(mergedRooms);
       } catch (error) {
