@@ -101,7 +101,7 @@ export default function PropertyGallery() {
         const roomImages: RoomImages[] = data.rooms;
 
         // Merge room images with metadata
-        const mergedRooms: Room[] = roomImages
+        const mergedRooms = roomImages
           .map((roomImg) => {
             // Use metadata from API if available (Blob Storage rooms), otherwise fall back to static metadata
             const metadata = roomImg.metadata || getRoomMetadata(roomImg.roomId);
@@ -157,7 +157,7 @@ export default function PropertyGallery() {
           })
           .filter((room): room is Room => room !== null);
 
-        setRooms(mergedRooms);
+        setRooms(mergedRooms as Room[]);
       } catch (error) {
         console.error('Error fetching rooms:', error);
       } finally {
