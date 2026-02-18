@@ -124,14 +124,6 @@
     "nextImage": "Next image",
     "goToImage": "Go to image"
   },
-  "amenityLabels": {
-    "wifi": "Wi-Fi",
-    "airConditioner": "Air Conditioner",
-    "refrigerator": "Refrigerator",
-    "tv": "TV",
-    "kitchen": "Kitchen",
-    "privateBathroom": "Private Bathroom"
-  },
   "social": {
     "scanQRCode": "Scan {platform} QR Code",
     "scanToConnect": "Scan this code to connect with us on {platform}",

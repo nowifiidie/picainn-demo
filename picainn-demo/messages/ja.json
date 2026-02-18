@@ -46,14 +46,6 @@
     "coffee": "コーヒー",
     "izakaya": "居酒屋"
   },
-  "amenityLabels": {
-    "wifi": "Wi-Fi",
-    "airConditioner": "エアコン",
-    "refrigerator": "冷蔵庫",
-    "tv": "テレビ",
-    "kitchen": "キッチン",
-    "privateBathroom": "専用バスルーム"
-  },
   "footer": {
     "license": "住宅宿泊事業法登録番号",
     "licenseNumber": "第M000000000号",

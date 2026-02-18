@@ -124,14 +124,6 @@
     "nextImage": "Imagen siguiente",
     "goToImage": "Ir a la imagen"
   },
-  "amenityLabels": {
-    "wifi": "Wi-Fi",
-    "airConditioner": "Aire acondicionado",
-    "refrigerator": "Nevera",
-    "tv": "TV",
-    "kitchen": "Cocina",
-    "privateBathroom": "Baño privado"
-  },
   "social": {
     "scanQRCode": "Escanear Código QR de {platform}",
     "scanToConnect": "Escanee este código para conectarse con nosotros en {platform}",

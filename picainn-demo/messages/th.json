@@ -124,14 +124,6 @@
     "nextImage": "รูปภาพถัดไป",
     "goToImage": "ไปที่รูปภาพ"
   },
-  "amenityLabels": {
-    "wifi": "Wi-Fi",
-    "airConditioner": "เครื่องปรับอากาศ",
-    "refrigerator": "ตู้เย็น",
-    "tv": "ทีวี",
-    "kitchen": "ครัว",
-    "privateBathroom": "ห้องน้ำส่วนตัว"
-  },
   "social": {
     "scanQRCode": "สแกน QR Code {platform}",
     "scanToConnect": "สแกนรหัสนี้เพื่อติดต่อเราบน {platform}",
