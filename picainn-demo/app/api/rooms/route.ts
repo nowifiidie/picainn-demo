@@ -24,20 +24,10 @@ interface RoomImages {
     name: string;
     type: string;
     description: string;
-    descriptionI18n?: {
-      en?: string;
-      zh?: string;
-      'zh-TW'?: string;
-      ko?: string;
-      th?: string;
-      es?: string;
-      fr?: string;
-      id?: string;
-      ar?: string;
-      de?: string;
-      vi?: string;
-      my?: string;
-    };
+    descriptionI18n?: Record<string, string>;
+    nameI18n?: Record<string, string>;
+    typeI18n?: Record<string, string>;
+    amenitiesI18n?: Record<string, string[]>;
     amenities: string[];
     bedInfo: string;
     maxGuests: number;
