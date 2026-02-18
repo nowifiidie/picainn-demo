@@ -6,7 +6,10 @@ export const routing = defineRouting({
   locales: ['en', 'zh', 'zh-TW', 'ko', 'th', 'es', 'fr', 'id', 'ar', 'de', 'vi', 'my'],
 
   // Used when no locale matches (default route)
-  defaultLocale: 'zh-TW'
+  defaultLocale: 'zh-TW',
+
+  // Always use defaultLocale for / so site opens in 繁體中文, not browser language
+  localeDetection: false
 });
 
 // Lightweight wrappers around Next.js' navigation APIs
