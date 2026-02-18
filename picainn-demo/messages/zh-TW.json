@@ -1,0 +1,145 @@
+{
+  "brand": {
+    "siteName": "皮卡因",
+    "siteTitle": "皮卡因 名宿"
+  },
+  "welcome": "歡迎",
+  "nav": {
+    "room": "房間",
+    "location": "位置",
+    "inquiry": "諮詢"
+  },
+  "gallery": {
+    "title": "房間",
+    "loadingRooms": "載入房間中...",
+    "noRoomsAvailable": "目前沒有可用的房間。",
+    "noImage": "無圖片"
+  },
+  "hero": {
+    "title": "歡迎來到皮卡因名宿",
+    "subtitle": "在東京市中心體驗正宗的日式款待",
+    "checkAvailability": "查看空房"
+  },
+  "features": {
+    "shibuya": "距離澀谷站7分鐘",
+    "wifi": "免費便攜Wi-Fi",
+    "support": "英語/中文/韓語支持",
+    "amenities": "廚房和洗衣"
+  },
+  "booking": {
+    "title": "預訂住宿",
+    "selectDates": "選擇日期",
+    "fullName": "全名",
+    "email": "電子郵件",
+    "guests": "客人數量",
+    "selectRoomType": "選擇房間類型",
+    "loadingRooms": "載入房間中...",
+    "pleaseSelectRoom": "請選擇房間",
+    "contactApp": "首選聯繫方式",
+    "contactOptions": {
+      "whatsapp": "WhatsApp",
+      "line": "LINE",
+      "wechat": "微信",
+      "email": "電子郵件"
+    },
+    "submit": "提交諮詢",
+    "sending": "發送中...",
+    "thankYou": "謝謝！",
+    "thankYouMessage": "我們已收到您的諮詢。我們將通過您首選的聯繫方式與您聯繫以完成預訂。",
+    "close": "關閉",
+    "error": "提交諮詢失敗，請重試。",
+    "errorGeneric": "發生錯誤，請重試。"
+  },
+  "localGuide": {
+    "title": "附近推薦",
+    "convenience": "便利店",
+    "coffee": "咖啡",
+    "izakaya": "居酒屋",
+    "viewOnGoogleMaps": "在Google地圖上查看"
+  },
+  "aboutSpace": {
+    "title": "關於此空間",
+    "features": {
+      "location": {
+        "title": "位置",
+        "description": "距離駒込站（JR山手線和南北線）步行5分鐘。20分鐘內可到達淺草、東京晴空塔、銀座、明治神宮和皇居。"
+      },
+      "safety": {
+        "title": "安全",
+        "description": "位於安全的東京市，整棟建築都配備了監控攝像頭，以確保客人的安全。"
+      },
+      "wifi": {
+        "title": "免費便攜Wi-Fi",
+        "description": "住宿期間為所有客人提供免費便攜Wi-Fi設備。"
+      },
+      "multilingual": {
+        "title": "多語言支持",
+        "description": "提供英語、中文和日語支持，方便您的使用。"
+      },
+      "hotSprings": {
+        "title": "溫泉",
+        "description": "步行5分鐘即可到達公共浴場。著名的天然溫泉「東京新宿溫泉櫻花」位於巢鴨站附近（與駒込站相鄰）。"
+      },
+      "theRoom": {
+        "title": "房間",
+        "description": "配備冰箱、鍋具、電視、空調、衛生間和淋浴間。適合2人團體。",
+        "details": "1張雙人床（140厘米 x 200厘米）+ 2張單人日式床墊（150厘米 x 210厘米）+ 2個枕頭"
+      },
+      "transportation": {
+        "title": "交通",
+        "description": "從羽田和成田機場交通便利。駒込站南出口和東出口都有電梯。我們的房子有電梯，方便行李搬運。"
+      },
+      "nearbyAttractions": {
+        "title": "附近景點",
+        "description": "安靜的住宅區，2分鐘內就有購物街。六義園（步行5分鐘）、東京大學和小石川後樂園（步行20分鐘）。附近餐飲：拉麵、壽司、天婦羅、蕎麥麵、章魚燒、烤雞肉串、鰻魚、烤肉和日式點心店。"
+      },
+      "shopping": {
+        "title": "購物與便利",
+        "description": "駒込站東出口附近的購物區：24小時便利店、超市（營業至凌晨1點）、Doutor咖啡、藥妝店、便當店、拉麵店（營業至凌晨5點）和價格合理的麵包店。"
+      },
+      "commonAreas": {
+        "title": "公共區域",
+        "description": "一樓公共區域配備洗衣機和微波爐。"
+      }
+    },
+    "houseRules": {
+      "title": "房屋規則",
+      "rule1": "請保持清潔，不要製造噪音、在房間內跳躍或影響其他住戶，因為日本人對聲音非常敏感，我們的區域特別安靜。",
+      "rule2": "離開房間時，請務必關閉空調、水和煤氣，以保持房間清潔。",
+      "rule3": "為維護您的隱私和安心，請僅使用Airbnb消息進行溝通。"
+    },
+    "perfectFor": "非常適合情侶、學生、團體和商務旅行者。"
+  },
+  "roomDetail": {
+    "maxGuests": "最大客人",
+    "bedding": "床上用品",
+    "included": "包含",
+    "roomSize": "房間大小",
+    "bedAndBedding": "床和床上用品",
+    "amenities": "設施",
+    "location": "位置",
+    "bookThisRoom": "預訂此房間",
+    "closeRoomDetails": "關閉房間詳情",
+    "previousImage": "上一張圖片",
+    "nextImage": "下一張圖片",
+    "goToImage": "轉到圖片"
+  },
+  "social": {
+    "scanQRCode": "掃描{platform}二維碼",
+    "scanToConnect": "掃描此代碼以在{platform}上與我們聯繫",
+    "line": "LINE",
+    "wechat": "微信",
+    "xiaohongshu": "小紅書"
+  },
+  "footer": {
+    "license": "住宅宿泊事業法登記號",
+    "licenseNumber": "第M000000000号",
+    "copyright": "皮卡因. 版權所有。",
+    "companyName": "皮卡因名宿",
+    "address": "日本国東京都文京区本駒込5-55-3",
+    "tel": "03-6638-6215",
+    "fax": "03-6638-6217",
+    "email": "picainn@gmail.com"
+  }
+}
+
