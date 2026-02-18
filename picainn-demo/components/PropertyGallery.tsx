@@ -156,9 +156,9 @@ export default function PropertyGallery() {
             };
             return room;
           })
-          .filter((room): room is Room => room !== null);
+          .filter((room): room is NonNullable<typeof room> => room !== null);
 
-        setRooms(mergedRooms);
+        setRooms(mergedRooms as Room[]);
       } catch (error) {
         console.error('Error fetching rooms:', error);
       } finally {
