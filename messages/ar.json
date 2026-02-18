@@ -124,6 +124,14 @@
     "nextImage": "الصورة التالية",
     "goToImage": "انتقل إلى الصورة"
   },
+  "amenityLabels": {
+    "wifi": "Wi-Fi",
+    "airConditioner": "مكيف الهواء",
+    "refrigerator": "ثلاجة",
+    "tv": "تلفزيون",
+    "kitchen": "مطبخ",
+    "privateBathroom": "حمام خاص"
+  },
   "social": {
     "scanQRCode": "امسح رمز QR {platform}",
     "scanToConnect": "امسح هذا الرمز للاتصال بنا على {platform}",

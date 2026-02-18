@@ -27,6 +27,7 @@ interface RoomDetailModalProps {
     images?: string[];
     description: string;
     amenities: string[];
+    amenityKeys?: string[];
     bedInfo: string;
     maxGuests: number;
     size?: string;
@@ -196,7 +197,8 @@ export default function RoomDetailModal({ room, onClose }: RoomDetailModalProps)
             <h3 className="text-lg font-medium text-[#333333] mb-4">{t('roomDetail.amenities')}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {room.amenities.map((amenity, index) => {
-                const Icon = amenityIcons[amenity] || Home;
+                const iconKey = room.amenityKeys?.[index] ?? amenity;
+                const Icon = amenityIcons[iconKey] || Home;
                 return (
                   <div key={index} className="flex items-center gap-2">
                     <Icon className="w-4 h-4 text-[#8B7355]" />

@@ -15,8 +15,25 @@ function getTranslatedDescription(
   if (descriptionI18n && locale && descriptionI18n[locale]) {
     return descriptionI18n[locale];
   }
-  // Fallback to default description
   return description;
+}
+
+const AMENITY_KEYS: Record<string, string> = {
+  'Wi-Fi': 'wifi', 'WiFi': 'wifi', 'Wifi': 'wifi',
+  'Air Conditioner': 'airConditioner', 'Refrigerator': 'refrigerator', 'TV': 'tv',
+  'Kitchen': 'kitchen', 'Private Bathroom': 'privateBathroom',
+};
+
+function getAmenityLabel(amenity: string, t: (key: string) => string): string {
+  const key = AMENITY_KEYS[amenity];
+  if (key) {
+    try {
+      return t(`amenityLabels.${key}`);
+    } catch {
+      return amenity;
+    }
+  }
+  return amenity;
 }
 
 interface Room {
@@ -27,6 +44,7 @@ interface Room {
   images: string[];
   description: string;
   amenities: string[];
+  amenityKeys?: string[];
   bedInfo: string;
   maxGuests: number;
   size: string;
@@ -42,20 +60,10 @@ interface RoomImages {
     name: string;
     type: string;
     description: string;
-    descriptionI18n?: {
-      en?: string;
-      zh?: string;
-      'zh-TW'?: string;
-      ko?: string;
-      th?: string;
-      es?: string;
-      fr?: string;
-      id?: string;
-      ar?: string;
-      de?: string;
-      vi?: string;
-      my?: string;
-    };
+    descriptionI18n?: Record<string, string>;
+    nameI18n?: Record<string, string>;
+    typeI18n?: Record<string, string>;
+    amenitiesI18n?: Record<string, string[]>;
     amenities: string[];
     bedInfo: string;
     maxGuests: number;
@@ -93,7 +101,7 @@ export default function PropertyGallery() {
         const roomImages: RoomImages[] = data.rooms;
 
         // Merge room images with metadata
-        const mergedRooms: Room[] = roomImages
+        const mergedRooms = roomImages
           .map((roomImg) => {
             // Use metadata from API if available (Blob Storage rooms), otherwise fall back to static metadata
             const metadata = roomImg.metadata || getRoomMetadata(roomImg.roomId);
@@ -120,10 +128,17 @@ export default function PropertyGallery() {
             );
             const allImages = [cacheBustMain, ...cacheBustAdditional];
 
+            const nameI18n = metadata.nameI18n as Record<string, string> | undefined;
+            const typeI18n = metadata.typeI18n as Record<string, string> | undefined;
+            const amenitiesI18n = metadata.amenitiesI18n as Record<string, string[]> | undefined;
+            const displayName = (nameI18n && locale && nameI18n[locale]) ? nameI18n[locale] : metadata.name;
+            const displayType = (typeI18n && locale && typeI18n[locale]) ? typeI18n[locale] : (metadata.type || '');
+            const displayAmenities = (amenitiesI18n && locale && amenitiesI18n[locale]) ? amenitiesI18n[locale] : (metadata.amenities || []).map((a: string) => getAmenityLabel(a, t));
+
             return {
               id: numericId,
-              name: metadata.name,
-              type: metadata.type,
+              name: displayName,
+              type: displayType,
               image: cacheBustMain,
               images: allImages,
               description: getTranslatedDescription(
@@ -131,7 +146,8 @@ export default function PropertyGallery() {
                 metadata.descriptionI18n,
                 locale
               ),
-              amenities: metadata.amenities,
+              amenities: displayAmenities,
+              amenityKeys: metadata.amenities,
               bedInfo: metadata.bedInfo,
               maxGuests: metadata.maxGuests,
               size: metadata.size,
@@ -141,7 +157,7 @@ export default function PropertyGallery() {
           })
           .filter((room): room is Room => room !== null);
 
-        setRooms(mergedRooms);
+        setRooms(mergedRooms as Room[]);
       } catch (error) {
         console.error('Error fetching rooms:', error);
       } finally {

@@ -24,20 +24,10 @@ interface RoomImages {
     name: string;
     type: string;
     description: string;
-    descriptionI18n?: {
-      en?: string;
-      zh?: string;
-      'zh-TW'?: string;
-      ko?: string;
-      th?: string;
-      es?: string;
-      fr?: string;
-      id?: string;
-      ar?: string;
-      de?: string;
-      vi?: string;
-      my?: string;
-    };
+    descriptionI18n?: Record<string, string>;
+    nameI18n?: Record<string, string>;
+    typeI18n?: Record<string, string>;
+    amenitiesI18n?: Record<string, string[]>;
     amenities: string[];
     bedInfo: string;
     maxGuests: number;
@@ -102,6 +92,9 @@ export async function GET() {
                 type: metadata.type,
                 description: metadata.description,
                 descriptionI18n: metadata.descriptionI18n,
+                nameI18n: metadata.nameI18n,
+                typeI18n: metadata.typeI18n,
+                amenitiesI18n: metadata.amenitiesI18n,
                 amenities: metadata.amenities,
                 bedInfo: metadata.bedInfo,
                 maxGuests: metadata.maxGuests,
@@ -113,7 +106,6 @@ export async function GET() {
               },
             });
           } else {
-            // Room has no images at all - still include it but with a placeholder
             console.warn(`Room ${roomId} has no images, using placeholder`);
             availableRooms.push({
               roomId,
@@ -124,6 +116,9 @@ export async function GET() {
                 type: metadata.type,
                 description: metadata.description,
                 descriptionI18n: metadata.descriptionI18n,
+                nameI18n: metadata.nameI18n,
+                typeI18n: metadata.typeI18n,
+                amenitiesI18n: metadata.amenitiesI18n,
                 amenities: metadata.amenities,
                 bedInfo: metadata.bedInfo,
                 maxGuests: metadata.maxGuests,
